@@ -1,0 +1,86 @@
+package com.simats.notice2action.data
+
+import android.content.Context
+import android.content.SharedPreferences
+
+/**
+ * Manages persistent user session and auto-login credentials
+ * using Android SharedPreferences.
+ */
+object SessionManager {
+    private const val PREF_NAME = "notice2action_session"
+    private const val KEY_IS_LOGGED_IN = "is_logged_in"
+    private const val KEY_USER_ID = "user_id"
+    private const val KEY_USER_NAME = "user_name"
+    private const val KEY_USER_EMAIL = "user_email"
+    private const val KEY_USER_PASSWORD = "user_password"
+    private const val KEY_USER_ROLE = "user_role"
+    private const val KEY_USER_PHONE = "user_phone"
+    private const val KEY_USER_ADDRESS = "user_address"
+    private const val KEY_IMAGE_PATH = "image_path"
+
+    private fun getPrefs(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun saveSession(
+        context: Context,
+        user: User,
+        password: String? = null
+    ) {
+        val editor = getPrefs(context).edit()
+        editor.putBoolean(KEY_IS_LOGGED_IN, true)
+        editor.putInt(KEY_USER_ID, user.id)
+        editor.putString(KEY_USER_NAME, user.name)
+        editor.putString(KEY_USER_EMAIL, user.email)
+        editor.putString(KEY_USER_ROLE, user.role)
+        editor.putString(KEY_USER_PHONE, user.phone)
+        editor.putString(KEY_USER_ADDRESS, user.address)
+        editor.putString(KEY_IMAGE_PATH, user.imagePath)
+        if (!password.isNullOrBlank()) {
+            editor.putString(KEY_USER_PASSWORD, password)
+        }
+        editor.apply()
+    }
+
+    fun isLoggedIn(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_IS_LOGGED_IN, false)
+    }
+
+    fun getSavedEmail(context: Context): String {
+        return getPrefs(context).getString(KEY_USER_EMAIL, "") ?: ""
+    }
+
+    fun getSavedPassword(context: Context): String {
+        return getPrefs(context).getString(KEY_USER_PASSWORD, "") ?: ""
+    }
+
+    fun getSavedUser(context: Context): User? {
+        val prefs = getPrefs(context)
+        if (!prefs.getBoolean(KEY_IS_LOGGED_IN, false)) return null
+        val id = prefs.getInt(KEY_USER_ID, 0)
+        if (id == 0) return null
+        return User(
+            id = id,
+            name = prefs.getString(KEY_USER_NAME, "") ?: "",
+            email = prefs.getString(KEY_USER_EMAIL, "") ?: "",
+            role = prefs.getString(KEY_USER_ROLE, "Student - Northbridge College") ?: "Student - Northbridge College",
+            imagePath = prefs.getString(KEY_IMAGE_PATH, null),
+            phone = prefs.getString(KEY_USER_PHONE, null),
+            address = prefs.getString(KEY_USER_ADDRESS, null)
+        )
+    }
+
+    fun logout(context: Context) {
+        val email = getSavedEmail(context)
+        val editor = getPrefs(context).edit()
+        editor.putBoolean(KEY_IS_LOGGED_IN, false)
+        editor.remove(KEY_USER_PASSWORD)
+        editor.remove(KEY_USER_ID)
+        // Keep email saved for easy re-login
+        editor.putString(KEY_USER_EMAIL, email)
+        editor.apply()
+        UserSession.clear()
+    }
+}
+
