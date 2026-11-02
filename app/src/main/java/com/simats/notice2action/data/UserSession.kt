@@ -1,5 +1,9 @@
 package com.simats.notice2action.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
 data class User(
     val id: Int,
     val name: String,
@@ -11,7 +15,7 @@ data class User(
 )
 
 object UserSession {
-    var currentUser: User? = null
+    var currentUser: User? by mutableStateOf(null)
 
     val isLoggedIn: Boolean
         get() = currentUser != null

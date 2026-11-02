@@ -19,6 +19,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import com.simats.notice2action.data.AuthRepository
+import com.simats.notice2action.data.SessionManager
+import androidx.compose.ui.platform.LocalContext
 import com.simats.notice2action.data.UserSession
 
 import androidx.compose.runtime.*
@@ -42,6 +45,33 @@ fun DashboardScreen(
     onTasksClicked: () -> Unit = {},
     onCalendarClicked: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+
+    // Automatically load & refresh user profile from SessionManager / Backend
+    LaunchedEffect(Unit) {
+        if (UserSession.currentUser == null) {
+            val saved = SessionManager.getSavedUser(context)
+            if (saved != null) {
+                UserSession.currentUser = saved
+            }
+        }
+        UserSession.currentUser?.id?.let { id ->
+            try {
+                val res = AuthRepository.fetchProfile(id)
+                res.onSuccess { freshUser ->
+                    UserSession.currentUser = freshUser
+                    val pass = SessionManager.getSavedPassword(context)
+                    SessionManager.saveSession(context, freshUser, pass)
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    val currentUser = UserSession.currentUser
+    val displayName = currentUser?.name?.ifBlank { "User" } ?: "User"
+    val displayEmail = currentUser?.email?.ifBlank { "Logged in" } ?: "Logged in"
+    val userInitial = displayName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -73,7 +103,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Good Morning!",
+                            text = "Good Morning, $displayName!",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
@@ -99,14 +129,14 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text(
-                            text = UserSession.currentUser?.name?.ifBlank { "User" } ?: "User",
-                            fontSize = 14.sp,
+                            text = displayName,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Thursday, 15 October 2026",
+                            text = displayEmail,
                             fontSize = 12.sp,
                             color = Color(0xFF64748B)
                         )
@@ -114,11 +144,16 @@ fun DashboardScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(0xFFDBEAFE), CircleShape),
+                            .size(42.dp)
+                            .background(Color(0xFF2563EB), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "👩‍💼", fontSize = 20.sp)
+                        Text(
+                            text = userInitial,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 }
 
@@ -437,102 +472,111 @@ fun NavigationDrawerScreen(
     onGroupsClicked: () -> Unit = {},
     onSettingsClicked: () -> Unit = {},
     onHelpClicked: () -> Unit = {},
-    onTasksClicked: () -> Unit = {},
+    onTasksClicked: () -> Unit = {}
 ) {
-    Box(
+    val currentUser = UserSession.currentUser
+    val drawerName = currentUser?.name?.ifBlank { "User" } ?: "User"
+    val drawerEmail = currentUser?.email?.ifBlank { "" } ?: ""
+    val drawerRole = currentUser?.role?.ifBlank { "Student - Northbridge College" } ?: "Student - Northbridge College"
+    val drawerInitial = drawerName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+
+    Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f))
+            .background(Color.Black.copy(alpha = 0.5f))
             .clickable { onClose() },
-        contentAlignment = Alignment.CenterStart
+        color = Color.Transparent
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(310.dp)
-                .clickable(enabled = false) { },
-            color = Color.White,
-            shadowElevation = 16.dp
-        ) {
-            Column(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .navigationBarsPadding()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.82f)
+                    .clickable(enabled = false) {},
+                color = Color.White,
+                shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                tonalElevation = 8.dp
             ) {
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "NOTICE2ACTION",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB),
+                                letterSpacing = 1.sp
+                            )
+                            IconButton(
+                                onClick = onClose,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Text(text = "✕", fontSize = 16.sp, color = Color(0xFF64748B))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .size(54.dp)
+                                .background(Color(0xFF2563EB), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = drawerInitial,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Text(
-                            text = "B • MAIN NAVIGATION",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF94A3B8),
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = "✕",
+                            text = drawerName,
                             fontSize = 18.sp,
-                            color = Color(0xFF64748B),
-                            modifier = Modifier.clickable { onClose() }
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
                         )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .background(Color(0xFFDBEAFE), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "👩‍💼", fontSize = 26.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = UserSession.currentUser?.name?.ifBlank { "User" } ?: "User",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = UserSession.currentUser?.email?.ifBlank { "" } ?: "",
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = UserSession.currentUser?.role?.ifBlank { "Student - Northbridge College" } ?: "Student - Northbridge College",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF4F46E5)
+                            text = drawerEmail,
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
                         )
-                    }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    val menuItems = listOf(
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = drawerRole,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF4F46E5)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                        HorizontalDivider(color = Color(0xFFF1F5F9))
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        val menuItems = listOf(
                         Triple(Icons.Default.Home, "Home", true),
                         Triple(Icons.Default.Description, "My Documents", false),
                         Triple(Icons.AutoMirrored.Filled.Assignment, "My Tasks", false),
@@ -624,4 +668,5 @@ fun NavigationDrawerScreen(
             }
         }
     }
+}
 }

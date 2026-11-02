@@ -44,8 +44,8 @@ fun ProfileScreen(
     onLanguageClicked: () -> Unit = {}
 ) {
     var showEditProfileDialog by remember { mutableStateOf(false) }
-    var userName by remember { mutableStateOf(UserSession.currentUser?.name ?: "Maya Chen") }
-    var userEmail by remember { mutableStateOf(UserSession.currentUser?.email ?: "maya.chen@northbridge.example") }
+    var userName by remember { mutableStateOf(UserSession.currentUser?.name ?: "User") }
+    var userEmail by remember { mutableStateOf(UserSession.currentUser?.email ?: "") }
     var userRole by remember { mutableStateOf(UserSession.currentUser?.role ?: "Student - Northbridge College") }
     val coroutineScope = rememberCoroutineScope()
 
@@ -56,6 +56,7 @@ fun ProfileScreen(
                 userName = fetched.name
                 userEmail = fetched.email
                 userRole = fetched.role
+                UserSession.currentUser = fetched
             }
         }
     }
@@ -127,10 +128,16 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
-                                .background(Color(0xFFDBEAFE), CircleShape),
+                                .background(Color(0xFF2563EB), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "👩‍💼", fontSize = 28.sp)
+                            val initial = userName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+                            Text(
+                                text = initial,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
