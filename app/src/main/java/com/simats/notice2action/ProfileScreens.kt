@@ -43,20 +43,33 @@ fun ProfileScreen(
     onGroupsClicked: () -> Unit = {},
     onLanguageClicked: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val savedUser = remember { com.simats.notice2action.data.SessionManager.getSavedUser(context) }
+    val initialUser = UserSession.currentUser ?: savedUser
+
     var showEditProfileDialog by remember { mutableStateOf(false) }
-    var userName by remember { mutableStateOf(UserSession.currentUser?.name ?: "User") }
-    var userEmail by remember { mutableStateOf(UserSession.currentUser?.email ?: "") }
-    var userRole by remember { mutableStateOf(UserSession.currentUser?.role ?: "Student - Northbridge College") }
+    var userName by remember {
+        mutableStateOf(
+            initialUser?.name?.trim()?.ifBlank { null }
+                ?: initialUser?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+                ?: "User"
+        )
+    }
+    var userEmail by remember { mutableStateOf(initialUser?.email ?: "") }
+    var userRole by remember { mutableStateOf(initialUser?.role ?: "Student - Northbridge College") }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        UserSession.currentUser?.id?.let { id ->
+        val targetId = initialUser?.id ?: com.simats.notice2action.data.SessionManager.getSavedUser(context)?.id
+        targetId?.let { id ->
             val res = AuthRepository.fetchProfile(id)
             res.onSuccess { fetched ->
                 userName = fetched.name
                 userEmail = fetched.email
                 userRole = fetched.role
                 UserSession.currentUser = fetched
+                val pass = com.simats.notice2action.data.SessionManager.getSavedPassword(context)
+                com.simats.notice2action.data.SessionManager.saveSession(context, fetched, pass)
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.simats.notice2action.data
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 object AuthRepository {
@@ -11,6 +13,12 @@ object AuthRepository {
         } else null
     }
 
+    private fun resolveName(rawName: String?, email: String): String {
+        val trimmed = rawName?.trim() ?: ""
+        if (trimmed.isNotBlank()) return trimmed
+        return email.substringBefore("@").replaceFirstChar { it.uppercase() }
+    }
+
     suspend fun login(email: String, password: String): Result<User> {
         return try {
             val body = JSONObject().apply {
@@ -20,16 +28,19 @@ object AuthRepository {
             val (_, json) = ApiClient.postJson("auth/login.php", body)
             if (json.optBoolean("success", false)) {
                 val userObj = json.getJSONObject("user")
+                val userEmail = userObj.getString("email")
                 val user = User(
                     id = userObj.getInt("id"),
-                    name = userObj.getString("name"),
-                    email = userObj.getString("email"),
+                    name = resolveName(userObj.optString("name", ""), userEmail),
+                    email = userEmail,
                     role = userObj.optString("role", "Student - Northbridge College"),
                     imagePath = userObj.optNullableString("image_path"),
                     phone = userObj.optNullableString("phone"),
                     address = userObj.optNullableString("address")
                 )
-                UserSession.currentUser = user
+                withContext(Dispatchers.Main) {
+                    UserSession.currentUser = user
+                }
                 Result.success(user)
             } else {
                 val msg = json.optString("message", "Login failed")
@@ -51,13 +62,16 @@ object AuthRepository {
             val (_, json) = ApiClient.postJson("auth/signup.php", body)
             if (json.optBoolean("success", false)) {
                 val userObj = json.getJSONObject("user")
+                val userEmail = userObj.getString("email")
                 val user = User(
                     id = userObj.getInt("id"),
-                    name = userObj.getString("name"),
-                    email = userObj.getString("email"),
+                    name = resolveName(userObj.optString("name", name), userEmail),
+                    email = userEmail,
                     role = userObj.optString("role", role)
                 )
-                UserSession.currentUser = user
+                withContext(Dispatchers.Main) {
+                    UserSession.currentUser = user
+                }
                 Result.success(user)
             } else {
                 val msg = json.optString("message", "Registration failed")
@@ -93,16 +107,19 @@ object AuthRepository {
             val (_, json) = ApiClient.postJson("profile/profile_fetch.php", body)
             if (json.optBoolean("success", false)) {
                 val prof = json.getJSONObject("profile")
+                val profEmail = prof.getString("email")
                 val user = User(
                     id = prof.getInt("id"),
-                    name = prof.getString("name"),
-                    email = prof.getString("email"),
+                    name = resolveName(prof.optString("name", ""), profEmail),
+                    email = profEmail,
                     role = prof.optString("role", "Student - Northbridge College"),
                     imagePath = prof.optNullableString("image_path"),
                     phone = prof.optNullableString("phone"),
                     address = prof.optNullableString("address")
                 )
-                UserSession.currentUser = user
+                withContext(Dispatchers.Main) {
+                    UserSession.currentUser = user
+                }
                 Result.success(user)
             } else {
                 Result.failure(Exception(json.optString("message", "Profile fetch failed")))
@@ -132,16 +149,19 @@ object AuthRepository {
             val (_, json) = ApiClient.postJson("profile/profile_edit.php", body)
             if (json.optBoolean("success", false)) {
                 val prof = json.getJSONObject("profile")
+                val profEmail = prof.getString("email")
                 val user = User(
                     id = prof.getInt("id"),
-                    name = prof.getString("name"),
-                    email = prof.getString("email"),
+                    name = resolveName(prof.optString("name", name), profEmail),
+                    email = profEmail,
                     role = prof.optString("role", role),
                     imagePath = prof.optNullableString("image_path"),
                     phone = prof.optNullableString("phone"),
                     address = prof.optNullableString("address")
                 )
-                UserSession.currentUser = user
+                withContext(Dispatchers.Main) {
+                    UserSession.currentUser = user
+                }
                 Result.success(user)
             } else {
                 Result.failure(Exception(json.optString("message", "Profile update failed")))
@@ -158,7 +178,9 @@ object AuthRepository {
             }
             val (_, json) = ApiClient.postJson("auth/delete_account.php", body)
             if (json.optBoolean("success", false)) {
-                UserSession.clear()
+                withContext(Dispatchers.Main) {
+                    UserSession.clear()
+                }
                 Result.success(Unit)
             } else {
                 Result.failure(Exception(json.optString("message", "Failed to delete account")))

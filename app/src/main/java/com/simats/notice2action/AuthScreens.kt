@@ -883,6 +883,7 @@ fun LoginScreen(
                             val result = AuthRepository.login(cleanEmail, cleanPassword)
                             isLoading = false
                             result.onSuccess { user ->
+                                UserSession.currentUser = user
                                 SessionManager.saveSession(context, user, cleanPassword)
                                 onLoginSuccess()
                             }.onFailure { error ->
@@ -1126,6 +1127,7 @@ fun CreateAccountScreen(
                             val result = AuthRepository.signup(cleanName, cleanEmail, cleanPassword)
                             isLoading = false
                             result.onSuccess { user ->
+                                UserSession.currentUser = user
                                 // Save session and credentials so the user is automatically logged in
                                 SessionManager.saveSession(context, user, cleanPassword)
                                 onCreateSuccess()

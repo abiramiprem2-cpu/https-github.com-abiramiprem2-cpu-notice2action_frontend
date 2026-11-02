@@ -31,7 +31,10 @@ object SessionManager {
         val editor = getPrefs(context).edit()
         editor.putBoolean(KEY_IS_LOGGED_IN, true)
         editor.putInt(KEY_USER_ID, user.id)
-        editor.putString(KEY_USER_NAME, user.name)
+        val resolvedName = user.name.trim().ifBlank {
+            user.email.substringBefore("@").replaceFirstChar { it.uppercase() }
+        }
+        editor.putString(KEY_USER_NAME, resolvedName)
         editor.putString(KEY_USER_EMAIL, user.email)
         editor.putString(KEY_USER_ROLE, user.role)
         editor.putString(KEY_USER_PHONE, user.phone)
@@ -60,9 +63,13 @@ object SessionManager {
         val id = prefs.getInt(KEY_USER_ID, 0)
         val email = prefs.getString(KEY_USER_EMAIL, "") ?: ""
         if (id == 0 || email.isBlank()) return null
+        var name = prefs.getString(KEY_USER_NAME, "")?.trim() ?: ""
+        if (name.isBlank() && email.isNotBlank()) {
+            name = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+        }
         return User(
             id = id,
-            name = prefs.getString(KEY_USER_NAME, "") ?: "",
+            name = name,
             email = email,
             role = prefs.getString(KEY_USER_ROLE, "Student - Northbridge College") ?: "Student - Northbridge College",
             imagePath = prefs.getString(KEY_IMAGE_PATH, null),

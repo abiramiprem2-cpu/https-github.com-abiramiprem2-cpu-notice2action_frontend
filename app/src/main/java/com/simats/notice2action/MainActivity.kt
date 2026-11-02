@@ -83,6 +83,9 @@ class MainActivity : ComponentActivity() {
                                 }
                                 if (loginRes.isSuccess) {
                                     val user = loginRes.getOrNull()!!
+                                    withContext(Dispatchers.Main) {
+                                        UserSession.currentUser = user
+                                    }
                                     SessionManager.saveSession(context, user, savedPassword)
                                     delay(800L)
                                     currentScreen = AppScreen.MAIN
@@ -144,7 +147,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         AppScreen.MAIN -> {
+                            val activeUser = UserSession.currentUser ?: SessionManager.getSavedUser(context)
                             DashboardScreen(
+                                user = activeUser,
                                 onScanDocumentClicked = { currentScreen = AppScreen.SCAN_DOCUMENT },
                                 onUploadDocumentClicked = { currentScreen = AppScreen.UPLOAD_DOCUMENT },
                                 onProfileClicked = { currentScreen = AppScreen.PROFILE },
@@ -193,7 +198,9 @@ class MainActivity : ComponentActivity() {
                         }
                         AppScreen.NAVIGATION_DRAWER -> {
                             Box(modifier = Modifier.fillMaxSize()) {
+                                val activeUser = UserSession.currentUser ?: SessionManager.getSavedUser(context)
                                 DashboardScreen(
+                                    user = activeUser,
                                     onScanDocumentClicked = { currentScreen = AppScreen.SCAN_DOCUMENT },
                                     onUploadDocumentClicked = { currentScreen = AppScreen.UPLOAD_DOCUMENT },
                                     onProfileClicked = { },
@@ -204,6 +211,7 @@ class MainActivity : ComponentActivity() {
                                     onCalendarClicked = { currentScreen = AppScreen.CALENDAR }
                                 )
                                 NavigationDrawerScreen(
+                                    user = activeUser,
                                     onClose = { currentScreen = AppScreen.MAIN },
                                     onHome = { currentScreen = AppScreen.MAIN },
                                     onLogout = {

@@ -936,7 +936,7 @@ fun TaskDetailsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "Extracted deadline • Verified by Maya",
+                                        text = "Extracted deadline • Verified by " + (com.simats.notice2action.data.UserSession.currentUser?.name?.ifBlank { "Admin" } ?: "Admin"),
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )

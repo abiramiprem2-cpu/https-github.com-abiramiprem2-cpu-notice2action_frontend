@@ -475,7 +475,7 @@ fun GroupDetailsScreen(
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "Maya • Admin",
+                            text = (com.simats.notice2action.data.UserSession.currentUser?.name?.ifBlank { "You" } ?: "Admin") + " • Admin",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF16A34A)
@@ -579,7 +579,7 @@ fun GroupDetailsScreen(
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Maya Chen",
+                                    text = com.simats.notice2action.data.UserSession.currentUser?.name?.ifBlank { "Group Admin" } ?: "Group Admin",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0F172A)
@@ -988,7 +988,7 @@ fun PublishNoticeScreen(
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Maya Chen • College Students",
+                        text = (com.simats.notice2action.data.UserSession.currentUser?.name?.ifBlank { "Admin" } ?: "Admin") + " • College Students",
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )

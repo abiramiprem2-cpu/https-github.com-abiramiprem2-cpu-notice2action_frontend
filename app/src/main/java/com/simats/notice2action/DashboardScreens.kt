@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DashboardScreen(
+    user: com.simats.notice2action.data.User? = null,
     onScanDocumentClicked: () -> Unit,
     onUploadDocumentClicked: () -> Unit,
     onProfileClicked: () -> Unit,
@@ -46,19 +47,27 @@ fun DashboardScreen(
     onCalendarClicked: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val savedUser = remember { SessionManager.getSavedUser(context) }
+    var currentUser by remember { mutableStateOf(user ?: UserSession.currentUser ?: savedUser) }
+
+    LaunchedEffect(user, UserSession.currentUser) {
+        val resolved = user ?: UserSession.currentUser ?: SessionManager.getSavedUser(context)
+        if (resolved != null) {
+            currentUser = resolved
+            if (UserSession.currentUser == null) {
+                UserSession.currentUser = resolved
+            }
+        }
+    }
 
     // Automatically load & refresh user profile from SessionManager / Backend
     LaunchedEffect(Unit) {
-        if (UserSession.currentUser == null) {
-            val saved = SessionManager.getSavedUser(context)
-            if (saved != null) {
-                UserSession.currentUser = saved
-            }
-        }
-        UserSession.currentUser?.id?.let { id ->
+        val targetId = currentUser?.id ?: SessionManager.getSavedUser(context)?.id
+        targetId?.let { id ->
             try {
                 val res = AuthRepository.fetchProfile(id)
                 res.onSuccess { freshUser ->
+                    currentUser = freshUser
                     UserSession.currentUser = freshUser
                     val pass = SessionManager.getSavedPassword(context)
                     SessionManager.saveSession(context, freshUser, pass)
@@ -67,10 +76,21 @@ fun DashboardScreen(
         }
     }
 
-    val currentUser = UserSession.currentUser
-    val displayName = currentUser?.name?.ifBlank { "User" } ?: "User"
-    val displayEmail = currentUser?.email?.ifBlank { "Logged in" } ?: "Logged in"
-    val userInitial = displayName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+    val activeUser = currentUser ?: UserSession.currentUser ?: savedUser
+    val displayName = remember(activeUser, UserSession.currentUser) {
+        val u = activeUser ?: UserSession.currentUser ?: SessionManager.getSavedUser(context)
+        u?.name?.trim()?.ifBlank { null }
+            ?: u?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+            ?: SessionManager.getSavedEmail(context).substringBefore("@").replaceFirstChar { it.uppercase() }.ifBlank { "User" }
+    }
+    val displayEmail = remember(activeUser, UserSession.currentUser) {
+        val u = activeUser ?: UserSession.currentUser ?: SessionManager.getSavedUser(context)
+        u?.email?.trim()?.ifBlank { null }
+            ?: SessionManager.getSavedEmail(context).ifBlank { "Logged in" }
+    }
+    val userInitial = remember(displayName) {
+        displayName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -463,6 +483,7 @@ fun DashboardScreen(
 
 @Composable
 fun NavigationDrawerScreen(
+    user: com.simats.notice2action.data.User? = null,
     onClose: () -> Unit,
     onHome: () -> Unit,
     onLogout: () -> Unit,
@@ -474,11 +495,27 @@ fun NavigationDrawerScreen(
     onHelpClicked: () -> Unit = {},
     onTasksClicked: () -> Unit = {}
 ) {
-    val currentUser = UserSession.currentUser
-    val drawerName = currentUser?.name?.ifBlank { "User" } ?: "User"
-    val drawerEmail = currentUser?.email?.ifBlank { "" } ?: ""
-    val drawerRole = currentUser?.role?.ifBlank { "Student - Northbridge College" } ?: "Student - Northbridge College"
-    val drawerInitial = drawerName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+    val context = LocalContext.current
+    val savedUser = remember { SessionManager.getSavedUser(context) }
+    val resolvedUser = user ?: UserSession.currentUser ?: savedUser
+
+    val drawerName = remember(resolvedUser, UserSession.currentUser) {
+        val u = resolvedUser ?: UserSession.currentUser ?: SessionManager.getSavedUser(context)
+        u?.name?.trim()?.ifBlank { null }
+            ?: u?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+            ?: SessionManager.getSavedEmail(context).substringBefore("@").replaceFirstChar { it.uppercase() }.ifBlank { "User" }
+    }
+    val drawerEmail = remember(resolvedUser, UserSession.currentUser) {
+        val u = resolvedUser ?: UserSession.currentUser ?: SessionManager.getSavedUser(context)
+        u?.email?.trim()?.ifBlank { null }
+            ?: SessionManager.getSavedEmail(context).ifBlank { "" }
+    }
+    val drawerRole = remember(resolvedUser) {
+        resolvedUser?.role?.ifBlank { "Student - Northbridge College" } ?: "Student - Northbridge College"
+    }
+    val drawerInitial = remember(drawerName) {
+        drawerName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
+    }
 
     Surface(
         modifier = Modifier
