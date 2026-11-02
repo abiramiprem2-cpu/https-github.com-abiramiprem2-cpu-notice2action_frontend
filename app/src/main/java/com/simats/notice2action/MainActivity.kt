@@ -38,6 +38,10 @@ import com.simats.notice2action.data.SessionManager
 import com.simats.notice2action.data.UserSession
 import com.simats.notice2action.ui.theme.Notice2actionTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,21 +57,50 @@ class MainActivity : ComponentActivity() {
                         val savedUser = SessionManager.getSavedUser(context)
                         val savedEmail = SessionManager.getSavedEmail(context)
                         val savedPassword = SessionManager.getSavedPassword(context)
+                        val isLoggedIn = SessionManager.isLoggedIn(context)
 
-                        if (SessionManager.isLoggedIn(context) && savedUser != null) {
+                        if (isLoggedIn && savedUser != null) {
+                            // Instant restore
                             UserSession.currentUser = savedUser
+                            // Background refresh session
                             if (savedEmail.isNotBlank() && savedPassword.isNotBlank()) {
-                                try {
-                                    val loginRes = AuthRepository.login(savedEmail, savedPassword)
-                                    loginRes.onSuccess { freshUser ->
-                                        SessionManager.saveSession(context, freshUser, savedPassword)
-                                    }
-                                } catch (_: Exception) {}
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    try {
+                                        val loginRes = AuthRepository.login(savedEmail, savedPassword)
+                                        loginRes.onSuccess { freshUser ->
+                                            SessionManager.saveSession(context, freshUser, savedPassword)
+                                        }
+                                    } catch (_: Exception) {}
+                                }
                             }
                             delay(1000L)
                             currentScreen = AppScreen.MAIN
+                        } else if (savedEmail.isNotBlank() && savedPassword.isNotBlank()) {
+                            // Auto-login with saved credentials
+                            try {
+                                val loginRes = withContext(Dispatchers.IO) {
+                                    AuthRepository.login(savedEmail, savedPassword)
+                                }
+                                if (loginRes.isSuccess) {
+                                    val user = loginRes.getOrNull()!!
+                                    SessionManager.saveSession(context, user, savedPassword)
+                                    delay(800L)
+                                    currentScreen = AppScreen.MAIN
+                                } else {
+                                    delay(1200L)
+                                    currentScreen = AppScreen.LOGIN
+                                }
+                            } catch (_: Exception) {
+                                delay(1200L)
+                                currentScreen = AppScreen.LOGIN
+                            }
+                        } else if (savedEmail.isNotBlank()) {
+                            // User previously registered/logged in; go straight to login without re-onboarding
+                            delay(1200L)
+                            currentScreen = AppScreen.LOGIN
                         } else {
-                            delay(1800L)
+                            // First-time app open with zero accounts
+                            delay(1600L)
                             currentScreen = AppScreen.ONBOARDING_1
                         }
                     }

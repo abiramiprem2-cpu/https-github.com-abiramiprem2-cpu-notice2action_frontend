@@ -11,12 +11,7 @@ data class User(
 )
 
 object UserSession {
-    var currentUser: User? = User(
-        id = 1,
-        name = "Maya Chen",
-        email = "maya.chen@northbridge.example",
-        role = "Student - Northbridge College"
-    )
+    var currentUser: User? = null
 
     val isLoggedIn: Boolean
         get() = currentUser != null
@@ -25,4 +20,3 @@ object UserSession {
         currentUser = null
     }
 }
-

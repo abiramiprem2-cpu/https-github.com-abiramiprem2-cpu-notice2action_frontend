@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import com.simats.notice2action.data.UserSession
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -98,7 +99,7 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Maya Chen",
+                            text = UserSession.currentUser?.name?.ifBlank { "User" } ?: "User",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
@@ -500,14 +501,14 @@ fun NavigationDrawerScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Maya Chen",
+                        text = UserSession.currentUser?.name?.ifBlank { "User" } ?: "User",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "maya.chen@northbridge.example",
+                        text = UserSession.currentUser?.email?.ifBlank { "" } ?: "",
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )
@@ -520,7 +521,7 @@ fun NavigationDrawerScreen(
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "Student • Group admin",
+                            text = UserSession.currentUser?.role?.ifBlank { "Student - Northbridge College" } ?: "Student - Northbridge College",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF4F46E5)

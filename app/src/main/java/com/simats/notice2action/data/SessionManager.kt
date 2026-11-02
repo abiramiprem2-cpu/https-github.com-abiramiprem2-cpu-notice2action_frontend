@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 
 /**
  * Manages persistent user session and auto-login credentials
- * using Android SharedPreferences.
+ * using Android SharedPreferences with synchronous commit().
  */
 object SessionManager {
     private const val PREF_NAME = "notice2action_session"
@@ -40,7 +40,7 @@ object SessionManager {
         if (!password.isNullOrBlank()) {
             editor.putString(KEY_USER_PASSWORD, password)
         }
-        editor.apply()
+        editor.commit()
     }
 
     fun isLoggedIn(context: Context): Boolean {
@@ -57,13 +57,13 @@ object SessionManager {
 
     fun getSavedUser(context: Context): User? {
         val prefs = getPrefs(context)
-        if (!prefs.getBoolean(KEY_IS_LOGGED_IN, false)) return null
         val id = prefs.getInt(KEY_USER_ID, 0)
-        if (id == 0) return null
+        val email = prefs.getString(KEY_USER_EMAIL, "") ?: ""
+        if (id == 0 || email.isBlank()) return null
         return User(
             id = id,
             name = prefs.getString(KEY_USER_NAME, "") ?: "",
-            email = prefs.getString(KEY_USER_EMAIL, "") ?: "",
+            email = email,
             role = prefs.getString(KEY_USER_ROLE, "Student - Northbridge College") ?: "Student - Northbridge College",
             imagePath = prefs.getString(KEY_IMAGE_PATH, null),
             phone = prefs.getString(KEY_USER_PHONE, null),
@@ -73,14 +73,13 @@ object SessionManager {
 
     fun logout(context: Context) {
         val email = getSavedEmail(context)
+        val password = getSavedPassword(context)
         val editor = getPrefs(context).edit()
         editor.putBoolean(KEY_IS_LOGGED_IN, false)
-        editor.remove(KEY_USER_PASSWORD)
-        editor.remove(KEY_USER_ID)
-        // Keep email saved for easy re-login
+        // Keep credentials saved so re-login is automatic or single-tap
         editor.putString(KEY_USER_EMAIL, email)
-        editor.apply()
+        editor.putString(KEY_USER_PASSWORD, password)
+        editor.commit()
         UserSession.clear()
     }
 }
-

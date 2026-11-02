@@ -710,7 +710,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     var email by remember { mutableStateOf(SessionManager.getSavedEmail(context)) }
-    var password by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf(SessionManager.getSavedPassword(context)) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
