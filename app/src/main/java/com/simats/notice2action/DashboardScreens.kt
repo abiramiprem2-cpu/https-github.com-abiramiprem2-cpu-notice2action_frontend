@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Help
+import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.SessionManager
 import androidx.compose.ui.platform.LocalContext
@@ -110,7 +111,7 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text(
-                            text = "B • MAIN DASHBOARD & NAVIGATION",
+                            text = AppStrings.get("dash_category"),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF94A3B8),
@@ -118,7 +119,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Good Morning, $displayName!",
+                            text = "${AppStrings.get("dash_good_morning")}, $displayName!",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
@@ -180,7 +181,7 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text(
-                            text = "TURN DOCUMENTS\nINTO ACTIONS.",
+                            text = AppStrings.get("dash_banner_title"),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B),
@@ -188,7 +189,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Your next step, without the guesswork.",
+                            text = AppStrings.get("dash_banner_sub"),
                             fontSize = 13.sp,
                             color = Color(0xFF64748B)
                         )
@@ -213,13 +214,13 @@ fun DashboardScreen(
                         Column {
                             Icon(
                                 imageVector = Icons.Default.PhotoCamera,
-                                contentDescription = "Scan",
+                                contentDescription = AppStrings.get("dash_scan_document"),
                                 tint = Color.White,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Scan Document",
+                                text = AppStrings.get("dash_scan_document"),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -240,13 +241,13 @@ fun DashboardScreen(
                         Column {
                             Icon(
                                 imageVector = Icons.Default.UploadFile,
-                                contentDescription = "Upload",
+                                contentDescription = AppStrings.get("dash_upload_document"),
                                 tint = Color(0xFF2563EB),
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Upload Document",
+                                text = AppStrings.get("dash_upload_document"),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E293B)
@@ -269,7 +270,7 @@ fun DashboardScreen(
                             color = Color(0xFF0F172A)
                         )
                         Text(
-                            text = "Documents Processed",
+                            text = AppStrings.get("dash_docs_processed"),
                             fontSize = 11.sp,
                             color = Color(0xFF64748B)
                         )
@@ -282,7 +283,7 @@ fun DashboardScreen(
                             color = Color(0xFF0F172A)
                         )
                         Text(
-                            text = "Upcoming Actions",
+                            text = AppStrings.get("dash_upcoming_actions"),
                             fontSize = 11.sp,
                             color = Color(0xFF64748B)
                         )
@@ -297,13 +298,13 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recent Documents",
+                        text = AppStrings.get("dash_recent_docs"),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
                     )
                     Text(
-                        text = "View all",
+                        text = AppStrings.get("dash_view_all"),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF2563EB),
@@ -378,14 +379,14 @@ fun DashboardScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Verify dates",
+                                    text = AppStrings.get("dash_verify_dates"),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFD97706)
                                 )
                             }
                             Text(
-                                text = "3 actions identified",
+                                text = "3 ${AppStrings.get("dash_actions_identified")}",
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -401,13 +402,13 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Upcoming Deadlines",
+                        text = AppStrings.get("dash_upcoming_deadlines"),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
                     )
                     Text(
-                        text = "Calendar",
+                        text = AppStrings.get("dash_calendar"),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF2563EB),
@@ -618,39 +619,36 @@ fun NavigationDrawerScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         val menuItems = listOf(
-                            Triple(Icons.Default.Home, "Home", true),
-                            Triple(Icons.Default.Description, "My Documents", false),
-                            Triple(Icons.AutoMirrored.Filled.Assignment, "My Tasks", false),
-                            Triple(Icons.Default.Notifications, "Reminders", false),
-                            Triple(Icons.Default.CalendarToday, "Calendar", false),
-                            Triple(Icons.Default.Group, "Groups", false),
-                            Triple(Icons.Default.Settings, "Settings", false),
-                            Triple(Icons.AutoMirrored.Filled.Help, "Help and Support", false)
+                            Triple(Icons.Default.Home, "menu_home", onHome),
+                            Triple(Icons.Default.Description, "menu_documents", onMyDocumentsClicked),
+                            Triple(Icons.AutoMirrored.Filled.Assignment, "menu_tasks", onTasksClicked),
+                            Triple(Icons.Default.Notifications, "menu_reminders", onRemindersClicked),
+                            Triple(Icons.Default.CalendarToday, "menu_calendar", onCalendarClicked),
+                            Triple(Icons.Default.Group, "menu_groups", onGroupsClicked),
+                            Triple(Icons.Default.Settings, "menu_settings", onSettingsClicked),
+                            Triple(Icons.AutoMirrored.Filled.Help, "menu_help", onHelpClicked)
                         )
 
-                        menuItems.forEach { (iconVector, title, isSelected) ->
+                        menuItems.forEach { (iconVector, stringKey, clickAction) ->
+                            val title = AppStrings.get(stringKey)
+                            val isSelected = stringKey == "menu_home"
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(if (isSelected) Color(0xFFEEF2FF) else Color.Transparent)
                                     .clickable {
-                                        when (title) {
-                                            "Home" -> onHome()
-                                            "My Documents" -> onMyDocumentsClicked()
-                                            "My Tasks" -> onTasksClicked()
-                                            "Reminders" -> onRemindersClicked()
-                                            "Calendar" -> onCalendarClicked()
-                                            "Groups" -> onGroupsClicked()
-                                            "Settings" -> onSettingsClicked()
-                                            "Help and Support" -> onHelpClicked()
-                                            else -> onClose()
-                                        }
+                                        clickAction()
                                     }
                                     .padding(horizontal = 12.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(imageVector = iconVector, contentDescription = title, tint = if (isSelected) Color(0xFF2563EB) else Color(0xFF64748B), modifier = Modifier.size(20.dp))
+                                Icon(
+                                    imageVector = iconVector,
+                                    contentDescription = title,
+                                    tint = if (isSelected) Color(0xFF2563EB) else Color(0xFF64748B),
+                                    modifier = Modifier.size(20.dp)
+                                )
                                 Spacer(modifier = Modifier.width(14.dp))
                                 Text(
                                     text = title,
@@ -674,10 +672,15 @@ fun NavigationDrawerScreen(
                                 .padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout", tint = Color(0xFFDC2626), modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = AppStrings.get("menu_logout"),
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(20.dp)
+                            )
                             Spacer(modifier = Modifier.width(14.dp))
                             Text(
-                                text = "Logout",
+                                text = AppStrings.get("menu_logout"),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFDC2626)
@@ -696,7 +699,7 @@ fun NavigationDrawerScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Turn Documents Into Actions.",
+                            text = AppStrings.get("dash_banner_sub"),
                             fontSize = 11.sp,
                             color = Color(0xFF64748B)
                         )

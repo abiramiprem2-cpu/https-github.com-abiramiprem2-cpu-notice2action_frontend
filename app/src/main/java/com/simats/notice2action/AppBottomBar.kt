@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simats.notice2action.data.AppStrings
 
 enum class BottomNavTab {
     HOME,
@@ -45,13 +46,13 @@ fun AppBottomBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == BottomNavTab.HOME) Icons.Filled.Home else Icons.Outlined.Home,
-                    contentDescription = "Home",
+                    contentDescription = AppStrings.get("nav_home"),
                     modifier = Modifier.size(24.dp)
                 )
             },
             label = {
                 Text(
-                    text = "Home",
+                    text = AppStrings.get("nav_home"),
                     fontSize = 11.sp,
                     fontWeight = if (currentTab == BottomNavTab.HOME) FontWeight.Bold else FontWeight.Medium
                 )
@@ -71,13 +72,13 @@ fun AppBottomBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == BottomNavTab.TASKS) Icons.AutoMirrored.Filled.Assignment else Icons.AutoMirrored.Outlined.Assignment,
-                    contentDescription = "Tasks",
+                    contentDescription = AppStrings.get("nav_tasks"),
                     modifier = Modifier.size(24.dp)
                 )
             },
             label = {
                 Text(
-                    text = "Tasks",
+                    text = AppStrings.get("nav_tasks"),
                     fontSize = 11.sp,
                     fontWeight = if (currentTab == BottomNavTab.TASKS) FontWeight.Bold else FontWeight.Medium
                 )
@@ -97,13 +98,13 @@ fun AppBottomBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == BottomNavTab.REMINDERS) Icons.Filled.Notifications else Icons.Outlined.Notifications,
-                    contentDescription = "Reminders",
+                    contentDescription = AppStrings.get("nav_reminders"),
                     modifier = Modifier.size(24.dp)
                 )
             },
             label = {
                 Text(
-                    text = "Reminders",
+                    text = AppStrings.get("nav_reminders"),
                     fontSize = 11.sp,
                     fontWeight = if (currentTab == BottomNavTab.REMINDERS) FontWeight.Bold else FontWeight.Medium
                 )
@@ -123,13 +124,13 @@ fun AppBottomBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == BottomNavTab.PROFILE) Icons.Filled.Person else Icons.Outlined.Person,
-                    contentDescription = "Profile",
+                    contentDescription = AppStrings.get("nav_profile"),
                     modifier = Modifier.size(24.dp)
                 )
             },
             label = {
                 Text(
-                    text = "Profile",
+                    text = AppStrings.get("nav_profile"),
                     fontSize = 11.sp,
                     fontWeight = if (currentTab == BottomNavTab.PROFILE) FontWeight.Bold else FontWeight.Medium
                 )

@@ -33,7 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.AuthRepository
+import com.simats.notice2action.data.LanguageManager
 import com.simats.notice2action.data.SessionManager
 import com.simats.notice2action.data.User
 import com.simats.notice2action.data.UserSession
@@ -105,7 +107,7 @@ fun ProfileScreen(
         ) {
             // Category Label
             Text(
-                text = "H • PROFILE, SETTINGS & SUPPORT",
+                text = AppStrings.get("prof_category"),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF64748B),
@@ -121,7 +123,7 @@ fun ProfileScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "My Profile",
+                    text = AppStrings.get("prof_title"),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E293B)
@@ -132,7 +134,7 @@ fun ProfileScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
+                        contentDescription = AppStrings.get("menu_settings"),
                         tint = Color(0xFF2563EB),
                         modifier = Modifier.size(24.dp)
                     )
@@ -191,13 +193,13 @@ fun ProfileScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit Profile",
+                                contentDescription = AppStrings.get("prof_edit_profile"),
                                 tint = Color(0xFF2563EB),
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Edit Profile",
+                                text = AppStrings.get("prof_edit_profile"),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF2563EB)
@@ -219,15 +221,15 @@ fun ProfileScreen(
                 Column {
                     ProfileSettingsRow(
                         icon = Icons.Default.Notifications,
-                        title = "Notifications",
-                        subtitle = "2 reminders enabled",
+                        title = AppStrings.get("prof_notifications"),
+                        subtitle = AppStrings.get("prof_reminders_enabled"),
                         onClick = { onRemindersClicked() }
                     )
                     HorizontalDivider(color = Color(0xFFF1F5F9))
                     ProfileSettingsRow(
                         icon = Icons.Default.Language,
-                        title = "Language",
-                        subtitle = "English",
+                        title = AppStrings.get("prof_language"),
+                        subtitle = LanguageManager.getDisplayName(),
                         onClick = { onLanguageClicked() }
                     )
                 }
@@ -245,22 +247,22 @@ fun ProfileScreen(
                 Column {
                     ProfileSettingsRow(
                         icon = Icons.Default.Person,
-                        title = "Account settings",
-                        subtitle = "Personal details & security",
+                        title = AppStrings.get("prof_account_settings"),
+                        subtitle = AppStrings.get("prof_account_settings_sub"),
                         onClick = { onSettingsClicked() }
                     )
                     HorizontalDivider(color = Color(0xFFF1F5F9))
                     ProfileSettingsRow(
                         icon = Icons.Default.Security,
-                        title = "Privacy & data",
-                        subtitle = "Your documents, your control",
+                        title = AppStrings.get("prof_privacy_data"),
+                        subtitle = AppStrings.get("prof_privacy_data_sub"),
                         onClick = { onSettingsClicked() }
                     )
                     HorizontalDivider(color = Color(0xFFF1F5F9))
                     ProfileSettingsRow(
                         icon = Icons.AutoMirrored.Filled.Help,
-                        title = "Help and Support",
-                        subtitle = "Guides and contact options",
+                        title = AppStrings.get("prof_help_support"),
+                        subtitle = AppStrings.get("prof_help_support_sub"),
                         onClick = { onHelpClicked() }
                     )
                 }
@@ -289,13 +291,13 @@ fun ProfileScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Logout",
+                            contentDescription = AppStrings.get("prof_logout"),
                             tint = Color(0xFFEF4444),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Logout",
+                            text = AppStrings.get("prof_logout"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFEF4444)
@@ -388,7 +390,7 @@ fun EditProfileDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Edit Profile",
+                    text = AppStrings.get("edit_prof_title"),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0F172A)
@@ -400,7 +402,7 @@ fun EditProfileDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
+                        contentDescription = AppStrings.get("edit_prof_cancel"),
                         tint = Color(0xFF64748B)
                     )
                 }
@@ -442,7 +444,7 @@ fun EditProfileDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PhotoCamera,
-                            contentDescription = "Change Photo",
+                            contentDescription = AppStrings.get("edit_prof_choose_photo"),
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
@@ -464,7 +466,11 @@ fun EditProfileDialog(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Choose Photo from Gallery", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = AppStrings.get("edit_prof_choose_photo"),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
                 if (errorMessage != null) {
@@ -485,7 +491,7 @@ fun EditProfileDialog(
                 // Full Name Input
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Full Name",
+                        text = AppStrings.get("edit_prof_full_name"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF334155)
@@ -501,7 +507,7 @@ fun EditProfileDialog(
                         leadingIcon = {
                             Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF2563EB))
                         },
-                        placeholder = { Text("Enter your name", color = Color(0xFF94A3B8)) },
+                        placeholder = { Text(AppStrings.get("edit_prof_enter_name"), color = Color(0xFF94A3B8)) },
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isSaving
@@ -511,7 +517,7 @@ fun EditProfileDialog(
                 // Email Input
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Email ID",
+                        text = AppStrings.get("edit_prof_email"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF334155)
@@ -527,7 +533,7 @@ fun EditProfileDialog(
                         leadingIcon = {
                             Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2563EB))
                         },
-                        placeholder = { Text("Enter your email", color = Color(0xFF94A3B8)) },
+                        placeholder = { Text(AppStrings.get("edit_prof_enter_email"), color = Color(0xFF94A3B8)) },
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isSaving
@@ -574,7 +580,7 @@ fun EditProfileDialog(
                             UserSession.currentUser = updatedUser
                             val pass = SessionManager.getSavedPassword(context)
                             SessionManager.saveSession(context, updatedUser, pass)
-                            Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, AppStrings.get("edit_prof_success"), Toast.LENGTH_SHORT).show()
                             onProfileUpdated(updatedUser)
                         }.onFailure { err ->
                             errorMessage = err.localizedMessage ?: "Failed to update profile. Please try again."
@@ -593,9 +599,9 @@ fun EditProfileDialog(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Saving...", color = Color.White)
+                    Text(AppStrings.get("edit_prof_saving"), color = Color.White)
                 } else {
-                    Text("Save Changes", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(AppStrings.get("edit_prof_save"), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         },
@@ -604,7 +610,7 @@ fun EditProfileDialog(
                 onClick = onDismiss,
                 enabled = !isSaving
             ) {
-                Text(text = "Cancel", color = Color(0xFF64748B))
+                Text(text = AppStrings.get("edit_prof_cancel"), color = Color(0xFF64748B))
             }
         },
         containerColor = Color.White,
@@ -700,7 +706,7 @@ fun SettingsAndPrivacyScreen(
             ) {
                 // Header
                 Text(
-                    text = "H • PROFILE, SETTINGS & SUPPORT",
+                    text = AppStrings.get("prof_category"),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF64748B)
@@ -717,12 +723,12 @@ fun SettingsAndPrivacyScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = AppStrings.get("action_back"),
                                 tint = Color(0xFF334155)
                             )
                         }
                         Text(
-                            text = "Settings & privacy",
+                            text = AppStrings.get("settings_title"),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
@@ -740,7 +746,7 @@ fun SettingsAndPrivacyScreen(
 
                 // Appearance
                 Text(
-                    text = "Appearance",
+                    text = AppStrings.get("settings_appearance"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E293B)
@@ -760,7 +766,7 @@ fun SettingsAndPrivacyScreen(
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "Light", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                        Text(text = AppStrings.get("settings_light"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
                     }
                     Box(
                         modifier = Modifier
@@ -768,7 +774,7 @@ fun SettingsAndPrivacyScreen(
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "Dark", fontSize = 12.sp, color = Color(0xFF64748B))
+                        Text(text = AppStrings.get("settings_dark"), fontSize = 12.sp, color = Color(0xFF64748B))
                     }
                     Box(
                         modifier = Modifier
@@ -776,7 +782,7 @@ fun SettingsAndPrivacyScreen(
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "System", fontSize = 12.sp, color = Color(0xFF64748B))
+                        Text(text = AppStrings.get("settings_system"), fontSize = 12.sp, color = Color(0xFF64748B))
                     }
                 }
 
@@ -792,27 +798,27 @@ fun SettingsAndPrivacyScreen(
                     Column {
                         ProfileSettingsRow(
                             icon = Icons.Default.Language,
-                            title = "Language",
-                            subtitle = "English",
+                            title = AppStrings.get("prof_language"),
+                            subtitle = LanguageManager.getDisplayName(),
                             onClick = { onLanguageClicked() }
                         )
                         HorizontalDivider(color = Color(0xFFF1F5F9))
                         ProfileSettingsRow(
                             icon = Icons.Default.Notifications,
-                            title = "Default reminders",
-                            subtitle = "1 day before - 9:00 AM"
+                            title = AppStrings.get("settings_default_reminders"),
+                            subtitle = AppStrings.get("settings_default_reminders_sub")
                         )
                         HorizontalDivider(color = Color(0xFFF1F5F9))
                         ProfileSettingsRow(
                             icon = Icons.Default.LockOpen,
-                            title = "Document privacy",
-                            subtitle = "Private unless you explicitly share"
+                            title = AppStrings.get("settings_doc_privacy"),
+                            subtitle = AppStrings.get("settings_doc_privacy_sub")
                         )
                         HorizontalDivider(color = Color(0xFFF1F5F9))
                         ProfileSettingsRow(
                             icon = Icons.Default.Archive,
-                            title = "Data export",
-                            subtitle = "Documents and tasks - Export ZIP"
+                            title = AppStrings.get("settings_data_export"),
+                            subtitle = AppStrings.get("settings_data_export_sub")
                         )
                     }
                 }
@@ -835,7 +841,7 @@ fun SettingsAndPrivacyScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Sharing requires recipient authorization. No data is stored or exported without your permission.",
+                        text = AppStrings.get("settings_info_banner"),
                         fontSize = 12.sp,
                         color = Color(0xFF2563EB),
                         lineHeight = 16.sp
@@ -846,7 +852,7 @@ fun SettingsAndPrivacyScreen(
 
                 // Account control
                 Text(
-                    text = "Account control",
+                    text = AppStrings.get("settings_account_control"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E293B)
@@ -861,14 +867,14 @@ fun SettingsAndPrivacyScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Delete Account",
+                            text = AppStrings.get("settings_delete_account"),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Permanently remove your profile, private documents, tasks and reminders.",
+                            text = AppStrings.get("settings_delete_account_desc"),
                             fontSize = 12.sp,
                             color = Color(0xFF64748B),
                             lineHeight = 16.sp
@@ -892,12 +898,12 @@ fun SettingsAndPrivacyScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete",
+                                    contentDescription = AppStrings.get("settings_delete_account"),
                                     tint = Color(0xFFEF4444),
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = "Delete Account", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                                Text(text = AppStrings.get("settings_delete_account"), color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -911,6 +917,9 @@ fun SettingsAndPrivacyScreen(
 fun LanguageSettingsScreen(
     onBackClicked: () -> Unit
 ) {
+    val context = LocalContext.current
+    val currentLang = LanguageManager.currentLanguage
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -939,12 +948,12 @@ fun LanguageSettingsScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = AppStrings.get("action_back"),
                                 tint = Color(0xFF334155)
                             )
                         }
                         Text(
-                            text = "Language",
+                            text = AppStrings.get("lang_title"),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
@@ -958,24 +967,35 @@ fun LanguageSettingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = AppStrings.get("lang_subtitle"),
+                    fontSize = 13.sp,
+                    color = Color(0xFF64748B)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = Color.White,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     shadowElevation = 2.dp
                 ) {
                     Column {
-                        LanguageRow("English", true)
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-                        LanguageRow("Spanish (Español)", false)
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-                        LanguageRow("French (Français)", false)
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-                        LanguageRow("German (Deutsch)", false)
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-                        LanguageRow("Chinese (中文)", false)
+                        LanguageManager.supportedLanguages.forEachIndexed { index, option ->
+                            if (index > 0) {
+                                HorizontalDivider(color = Color(0xFFF1F5F9))
+                            }
+                            LanguageRow(
+                                englishName = option.nameInEnglish,
+                                nativeName = option.nativeName,
+                                isSelected = currentLang == option.code,
+                                onClick = {
+                                    LanguageManager.setLanguage(context, option.code)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -984,21 +1004,36 @@ fun LanguageSettingsScreen(
 }
 
 @Composable
-fun LanguageRow(languageName: String, isSelected: Boolean) {
+fun LanguageRow(
+    englishName: String,
+    nativeName: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { }
+            .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = languageName,
-            fontSize = 16.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) Color(0xFF2563EB) else Color(0xFF1E293B)
-        )
+        Column {
+            Text(
+                text = englishName,
+                fontSize = 16.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) Color(0xFF2563EB) else Color(0xFF1E293B)
+            )
+            if (englishName != nativeName) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = nativeName,
+                    fontSize = 13.sp,
+                    color = if (isSelected) Color(0xFF2563EB) else Color(0xFF64748B)
+                )
+            }
+        }
         if (isSelected) {
             Box(
                 modifier = Modifier
@@ -1055,12 +1090,12 @@ fun HelpSupportScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = AppStrings.get("action_back"),
                                 tint = Color(0xFF334155)
                             )
                         }
                         Text(
-                            text = "Help & Support",
+                            text = AppStrings.get("prof_help_support"),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
