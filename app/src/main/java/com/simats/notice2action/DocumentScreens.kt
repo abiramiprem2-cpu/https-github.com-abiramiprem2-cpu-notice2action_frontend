@@ -74,6 +74,19 @@ import androidx.compose.material.icons.filled.MoreVert
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.simats.notice2action.data.DocumentAnalysisSession
+import com.simats.notice2action.data.NoticeAnalysisResult
+import com.simats.notice2action.data.ActionTask
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Done
+import android.content.ClipData
+import android.content.ClipboardManager
 
 @Composable
 fun DocumentScannerCornerGuides(
@@ -1272,9 +1285,24 @@ fun DocumentPreviewScreen(
     onBackClicked: () -> Unit,
     onContinue: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val documentTitle = ActiveDocumentSession.documentName.ifBlank { "INNOVATION WEEK 2026" }
     val documentSize = ActiveDocumentSession.documentSizeText
     val documentBitmap = ActiveDocumentSession.documentBitmap
+    val isOcrScanning = DocumentAnalysisSession.isAnalyzing
+
+    // Trigger on-device OCR and AI analysis in background if not yet loaded
+    LaunchedEffect(documentTitle, documentBitmap, ActiveDocumentSession.documentUri) {
+        if (DocumentAnalysisSession.activeResult == null) {
+            DocumentAnalysisSession.analyzeDocument(
+                context = context,
+                bitmap = documentBitmap,
+                uri = ActiveDocumentSession.documentUri,
+                fallbackTitle = documentTitle
+            )
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -1293,6 +1321,7 @@ fun DocumentPreviewScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
+                // Top Header Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1381,10 +1410,10 @@ fun DocumentPreviewScreen(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(40.dp)
+                                        .size(42.dp)
                                         .background(
                                             if (documentTitle.endsWith(".pdf", true)) Color(0xFFFEE2E2) else Color(0xFFEEF2FF),
-                                            RoundedCornerShape(8.dp)
+                                            RoundedCornerShape(10.dp)
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -1406,7 +1435,7 @@ fun DocumentPreviewScreen(
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "$documentSize • Ready to extract",
+                                        text = "$documentSize • Ready for AI extraction",
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -1421,14 +1450,34 @@ fun DocumentPreviewScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        Text(
-                            text = "Submit proposal by 20 October 2026, 5:00 PM.",
-                            fontSize = 13.sp,
-                            color = Color(0xFF334155),
-                            lineHeight = 18.sp
-                        )
+                        // AI OCR Banner Badge
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFEFF6FF),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, Color(0xFFBFDBFE))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "AI",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isOcrScanning) "Running on-device OCR & AI analysis..." else "OCR ready: Converts notice into simple words & actions",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF1E40AF),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -1436,7 +1485,19 @@ fun DocumentPreviewScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { onContinue() },
+                onClick = {
+                    coroutineScope.launch {
+                        if (DocumentAnalysisSession.activeResult == null) {
+                            DocumentAnalysisSession.analyzeDocument(
+                                context = context,
+                                bitmap = documentBitmap,
+                                uri = ActiveDocumentSession.documentUri,
+                                fallbackTitle = documentTitle
+                            )
+                        }
+                        onContinue()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -1447,7 +1508,12 @@ fun DocumentPreviewScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Continue to Notice Details", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        text = "Continue to Notice Details",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -1461,12 +1527,17 @@ fun DocumentPreviewScreen(
     }
 }
 
-
 @Composable
 fun NoticeDetailsScreen(
     onBackClicked: () -> Unit,
     onGenerateActions: () -> Unit
 ) {
+    val context = LocalContext.current
+    val analysis = DocumentAnalysisSession.activeResult
+        ?: DocumentAnalysisSession.synthesizeAnalysis("", ActiveDocumentSession.documentName)
+
+    var showRawOcrText by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -1484,6 +1555,7 @@ fun NoticeDetailsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
+                // Header Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1492,17 +1564,22 @@ fun NoticeDetailsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .background(Color(0xFFEEF2FF), CircleShape)
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "C • DOCUMENT CAPTURE & PROCESSING",
+                                text = "DOCUMENT CAPTURE & PROCESSING",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF94A3B8),
@@ -1510,60 +1587,482 @@ fun NoticeDetailsScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Notice details",
+                                text = "Notice Details",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF0F172A)
                             )
                         }
                     }
+
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = Color(0xFF64748B)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Document Category Pill & Title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        color = Color(0xFFEEF2FF),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFC7D2FE))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = analysis.category,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                        }
+                    }
+
+                    Surface(
+                        color = Color(0xFFDCFCE7),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "OCR Verified",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF16A34A),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "Innovation Week 2026",
+                    text = analysis.documentTitle,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A)
+                    color = Color(0xFF0F172A),
+                    lineHeight = 28.sp
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Card 1: Simple Words Explanation
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .shadow(2.dp, RoundedCornerShape(16.dp))
                         .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
                         .padding(16.dp)
                 ) {
                     Column {
-                        Text(text = "Summary", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Meaning in Simple Words",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
                         Text(
-                            text = "Submit a proposal, attend a team briefing and prepare for final presentations.",
+                            text = analysis.simpleExplanation,
                             fontSize = 13.sp,
-                            color = Color(0xFF475569)
+                            color = Color(0xFF334155),
+                            lineHeight = 19.sp
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFF8FAFC),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = analysis.keySummary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF2563EB)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Card 2: Key Information & Deadline
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Key Timeline & Deadlines",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                            Surface(
+                                color = Color(0xFFFEE2E2),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = analysis.daysRemaining,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFDC2626),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarToday,
+                                    contentDescription = null,
+                                    tint = Color(0xFFD97706),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Primary Due Date",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                                Text(
+                                    text = analysis.primaryDeadline,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = "Authority", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                                Text(
+                                    text = analysis.issuingAuthority,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF334155),
+                                    maxLines = 1
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                                Text(text = "Reference ID", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                                Text(
+                                    text = analysis.referenceNumber,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF334155)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Card 3: What to Do Next / Identified Actions Preview
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "What to Do Next",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                            Text(
+                                text = "${analysis.actions.size} Tasks Identified",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        analysis.actions.forEachIndexed { index, action ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(Color(0xFFEEF2FF), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${index + 1}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF2563EB)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = action.title,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A)
+                                    )
+                                    Text(
+                                        text = action.dateTime,
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF64748B)
+                                    )
+                                }
+                                Surface(
+                                    color = when (action.priorityText.lowercase()) {
+                                        "high" -> Color(0xFFFEE2E2)
+                                        "medium" -> Color(0xFFFEF3C7)
+                                        else -> Color(0xFFDCFCE7)
+                                    },
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = action.priorityText,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = when (action.priorityText.lowercase()) {
+                                            "high" -> Color(0xFFDC2626)
+                                            "medium" -> Color(0xFFD97706)
+                                            else -> Color(0xFF16A34A)
+                                        },
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            if (index < analysis.actions.lastIndex) {
+                                HorizontalDivider(
+                                    color = Color(0xFFF1F5F9),
+                                    modifier = Modifier.padding(vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Card 4: Extracted OCR Raw Text (Expandable)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(1.dp, RoundedCornerShape(16.dp))
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showRawOcrText = !showRawOcrText },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = Color(0xFF64748B),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "View Extracted OCR Text",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF334155)
+                                )
+                            }
+
+                            Icon(
+                                imageVector = if (showRawOcrText) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Toggle",
+                                tint = Color(0xFF64748B)
+                            )
+                        }
+
+                        if (showRawOcrText) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = Color(0xFFF8FAFC),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            ) {
+                                Column(modifier = Modifier.padding(10.dp)) {
+                                    Text(
+                                        text = analysis.rawOcrText,
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF475569),
+                                        lineHeight = 16.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(
+                                            onClick = {
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                val clip = ClipData.newPlainText("Notice OCR Text", analysis.rawOcrText)
+                                                clipboard.setPrimaryClip(clip)
+                                                Toast.makeText(context, "OCR text copied to clipboard", Toast.LENGTH_SHORT).show()
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Copy",
+                                                tint = Color(0xFF2563EB),
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "Copy Text",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF2563EB)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Primary Button: Proceed to Review & Confirm Actions
             Button(
                 onClick = { onGenerateActions() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp),
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
             ) {
-                Text(text = "Generate Actions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Review & Confirm Actions (${analysis.actions.size})",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Confirm Actions",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun MyDocumentsScreen(

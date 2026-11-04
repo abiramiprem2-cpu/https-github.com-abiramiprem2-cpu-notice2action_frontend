@@ -28,12 +28,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MoreVert
+import com.simats.notice2action.data.DocumentAnalysisSession
+import com.simats.notice2action.data.ActionTask
 
 @Composable
 fun ReviewSuggestedActionsScreen(
     onBackClicked: () -> Unit,
     onConfirmActions: () -> Unit
 ) {
+    val analysis = DocumentAnalysisSession.activeResult
+    val dynamicActions = analysis?.actions ?: emptyList()
+    val actionItems = remember(dynamicActions) {
+        if (dynamicActions.isNotEmpty()) dynamicActions else listOf(
+            ActionTask(
+                title = "Submit project proposal",
+                description = "Upload abstract and team details to the student portal.",
+                dateTime = "20 Oct 2026 • 5:00 PM",
+                priorityText = "High",
+                statusText = "Verified date",
+                quote = "\"Submit your project proposal by 20 October...\" • p.1"
+            ),
+            ActionTask(
+                title = "Attend team briefing",
+                description = "Meet the team at Innovation Lab B.",
+                dateTime = "22 Oct 2026 • 10:00 AM",
+                priorityText = "Medium",
+                statusText = "Verified date",
+                quote = "\"Attend the briefing on 22 October, 10:00 AM...\" • p.1"
+            )
+        )
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -43,7 +74,8 @@ fun ReviewSuggestedActionsScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(20.dp)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(
                 modifier = Modifier
@@ -58,17 +90,22 @@ fun ReviewSuggestedActionsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .background(Color(0xFFEEF2FF), CircleShape)
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "D • TASK CREATION & MANAGEMENT",
+                                text = "TASK CREATION & MANAGEMENT",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF94A3B8),
@@ -76,7 +113,7 @@ fun ReviewSuggestedActionsScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Review suggested actions",
+                                text = "Review Suggested Actions",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF0F172A)
@@ -84,7 +121,16 @@ fun ReviewSuggestedActionsScreen(
                         }
                     }
 
-                    Text(text = "•••", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = Color(0xFF64748B)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -93,15 +139,21 @@ fun ReviewSuggestedActionsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFEFF6FF), RoundedCornerShape(12.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFBFDBFE)), RoundedCornerShape(12.dp))
                         .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "ℹ️", fontSize = 14.sp)
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "2 ready to confirm • 1 needs verification. All fields are editable.",
+                            text = "${actionItems.size} actions extracted from ${analysis?.documentTitle ?: "Notice"} • Ready to confirm & set reminders",
                             fontSize = 12.sp,
-                            color = Color(0xFF2563EB),
+                            color = Color(0xFF1E40AF),
                             lineHeight = 16.sp
                         )
                     }
@@ -109,50 +161,55 @@ fun ReviewSuggestedActionsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SuggestedActionCard(
-                    title = "Submit project proposal",
-                    description = "Upload abstract and team details to the student portal.",
-                    dateTime = "20 Oct 2026 • 5:00 PM",
-                    priorityText = "High",
-                    priorityBg = Color(0xFFFEE2E2),
-                    priorityTextColor = Color(0xFFEF4444),
-                    statusText = "Verified date",
-                    statusBg = Color(0xFFDCFCE7),
-                    statusTextColor = Color(0xFF16A34A),
-                    quote = "\"Submit your project proposal by 20 October...\" • p.1"
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SuggestedActionCard(
-                    title = "Attend team briefing",
-                    description = "Meet the team at Innovation Lab B.",
-                    dateTime = "22 Oct 2026 • 10:00 AM",
-                    priorityText = "Medium",
-                    priorityBg = Color(0xFFFEF3C7),
-                    priorityTextColor = Color(0xFFD97706),
-                    statusText = "Verified date",
-                    statusBg = Color(0xFFDCFCE7),
-                    statusTextColor = Color(0xFF16A34A),
-                    quote = "\"Attend the briefing on 22 October, 10:00 AM...\" • p.1"
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                actionItems.forEach { action ->
+                    SuggestedActionCard(
+                        title = action.title,
+                        description = action.description,
+                        dateTime = action.dateTime,
+                        priorityText = action.priorityText,
+                        priorityBg = when (action.priorityText.lowercase()) {
+                            "high" -> Color(0xFFFEE2E2)
+                            "medium" -> Color(0xFFFEF3C7)
+                            else -> Color(0xFFDCFCE7)
+                        },
+                        priorityTextColor = when (action.priorityText.lowercase()) {
+                            "high" -> Color(0xFFDC2626)
+                            "medium" -> Color(0xFFD97706)
+                            else -> Color(0xFF16A34A)
+                        },
+                        statusText = action.statusText,
+                        statusBg = Color(0xFFDCFCE7),
+                        statusTextColor = Color(0xFF16A34A),
+                        quote = action.quote
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
-                onClick = { onConfirmActions() },
+                onClick = {
+                    DocumentAnalysisSession.confirmedTasks.clear()
+                    DocumentAnalysisSession.confirmedTasks.addAll(actionItems)
+                    onConfirmActions()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "✓", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Confirm Actions (2 verified)",
+                        text = "Confirm & Add Actions (${actionItems.size})",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -180,7 +237,8 @@ fun SuggestedActionCard(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White,
         shape = RoundedCornerShape(16.dp),
-        shadowElevation = 2.dp
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -195,6 +253,18 @@ fun SuggestedActionCard(
                     color = Color(0xFF0F172A),
                     modifier = Modifier.weight(1f)
                 )
+                Surface(
+                    color = priorityBg,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = priorityText,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = priorityTextColor,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -211,7 +281,8 @@ fun SuggestedActionCard(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = Color(0xFFF8FAFC),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
                 Row(
                     modifier = Modifier
@@ -221,13 +292,31 @@ fun SuggestedActionCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "📅", fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = dateTime,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF334155)
+                        )
+                    }
+
+                    Surface(
+                        color = statusBg,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = statusText,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = statusTextColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
                 }
@@ -241,7 +330,12 @@ fun UpcomingActionsScreen(
     onBackClicked: () -> Unit,
     onHomeClicked: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf("Later") }
+    val tasks = if (DocumentAnalysisSession.confirmedTasks.isNotEmpty()) {
+        DocumentAnalysisSession.confirmedTasks
+    } else {
+        DocumentAnalysisSession.activeResult?.actions ?: emptyList()
+    }
+    val sourceTitle = DocumentAnalysisSession.activeResult?.documentTitle ?: "Innovation Week 2026"
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -268,17 +362,22 @@ fun UpcomingActionsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .background(Color(0xFFEEF2FF), CircleShape)
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "E • DEADLINES & NOTIFICATIONS",
+                                text = "DEADLINES & NOTIFICATIONS",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF94A3B8),
@@ -294,42 +393,97 @@ fun UpcomingActionsScreen(
                         }
                     }
 
-                    Text(
-                        text = "📅",
-                        fontSize = 20.sp,
-                        modifier = Modifier.clickable { onHomeClicked() }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(Color(0xFFEEF2FF), CircleShape)
+                            .clickable { onHomeClicked() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = "Home",
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                TaskCard(
-                    dateNum = "20",
-                    dateMonth = "OCT",
-                    title = "Submit project proposal",
-                    timeAndLeft = "5:00 PM • 5 days left",
-                    source = "Innovation Week 2026",
-                    priorityText = "High",
-                    priorityBg = Color(0xFFFEE2E2),
-                    priorityColor = Color(0xFFDC2626)
-                )
+                // Tasks count banner
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFDCFCE7),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color(0xFF86EFAC))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color(0xFF16A34A),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${tasks.size} actions active & synced to schedule",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF15803D)
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                TaskCard(
-                    dateNum = "22",
-                    dateMonth = "OCT",
-                    title = "Attend team briefing",
-                    timeAndLeft = "10:00 AM • 7 days left",
-                    source = "Innovation Week 2026",
-                    priorityText = "Medium",
-                    priorityBg = Color(0xFFFEF3C7),
-                    priorityColor = Color(0xFFD97706)
+                tasks.forEach { task ->
+                    TaskCard(
+                        dateNum = task.dateNum,
+                        dateMonth = task.dateMonth,
+                        title = task.title,
+                        timeAndLeft = "${task.dateTime.substringAfter("• ").trim().ifBlank { "5:00 PM" }} • ${task.daysLeft}",
+                        source = sourceTitle,
+                        priorityText = task.priorityText,
+                        priorityBg = when (task.priorityText.lowercase()) {
+                            "high" -> Color(0xFFFEE2E2)
+                            "medium" -> Color(0xFFFEF3C7)
+                            else -> Color(0xFFDCFCE7)
+                        },
+                        priorityColor = when (task.priorityText.lowercase()) {
+                            "high" -> Color(0xFFDC2626)
+                            "medium" -> Color(0xFFD97706)
+                            else -> Color(0xFF16A34A)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onHomeClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+            ) {
+                Text(
+                    text = "Return to Dashboard",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
         }
     }
 }
+
 
 @Composable
 fun TaskCard(
