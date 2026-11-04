@@ -135,7 +135,8 @@ object AuthRepository {
         email: String,
         role: String,
         phone: String? = null,
-        address: String? = null
+        address: String? = null,
+        imageBase64: String? = null
     ): Result<User> {
         return try {
             val body = JSONObject().apply {
@@ -145,6 +146,7 @@ object AuthRepository {
                 put("role", role.trim())
                 if (phone != null) put("phone", phone.trim())
                 if (address != null) put("address", address.trim())
+                if (!imageBase64.isNullOrBlank()) put("image_base64", imageBase64)
             }
             val (_, json) = ApiClient.postJson("profile/profile_edit.php", body)
             if (json.optBoolean("success", false)) {

@@ -1,5 +1,12 @@
 package com.simats.notice2action
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,26 +18,29 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.notice2action.data.AuthRepository
+import com.simats.notice2action.data.SessionManager
+import com.simats.notice2action.data.User
 import com.simats.notice2action.data.UserSession
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun ProfileScreen(
@@ -43,8 +53,8 @@ fun ProfileScreen(
     onGroupsClicked: () -> Unit = {},
     onLanguageClicked: () -> Unit = {}
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val savedUser = remember { com.simats.notice2action.data.SessionManager.getSavedUser(context) }
+    val context = LocalContext.current
+    val savedUser = remember { SessionManager.getSavedUser(context) }
     val initialUser = UserSession.currentUser ?: savedUser
 
     var showEditProfileDialog by remember { mutableStateOf(false) }
@@ -57,19 +67,20 @@ fun ProfileScreen(
     }
     var userEmail by remember { mutableStateOf(initialUser?.email ?: "") }
     var userRole by remember { mutableStateOf(initialUser?.role ?: "Student - Northbridge College") }
-    val coroutineScope = rememberCoroutineScope()
+    var userImagePath by remember { mutableStateOf(initialUser?.imagePath) }
 
     LaunchedEffect(Unit) {
-        val targetId = initialUser?.id ?: com.simats.notice2action.data.SessionManager.getSavedUser(context)?.id
+        val targetId = initialUser?.id ?: SessionManager.getSavedUser(context)?.id
         targetId?.let { id ->
             val res = AuthRepository.fetchProfile(id)
             res.onSuccess { fetched ->
                 userName = fetched.name
                 userEmail = fetched.email
                 userRole = fetched.role
+                userImagePath = fetched.imagePath
                 UserSession.currentUser = fetched
-                val pass = com.simats.notice2action.data.SessionManager.getSavedPassword(context)
-                com.simats.notice2action.data.SessionManager.saveSession(context, fetched, pass)
+                val pass = SessionManager.getSavedPassword(context)
+                SessionManager.saveSession(context, fetched, pass)
             }
         }
     }
@@ -105,7 +116,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Header Title & Gear Icon
+            // Header Title & Settings Gear Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,17 +128,22 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E293B)
                 )
-                Text(
-                    text = "⚙️",
-                    fontSize = 20.sp,
-                    color = Color(0xFF2563EB),
-                    modifier = Modifier.clickable { onSettingsClicked() }
-                )
+                IconButton(
+                    onClick = { onSettingsClicked() },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Profile Card (Individual user only)
+            // Profile Card (Individual user profile with avatar picture)
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = Color(0xFFEEF2FF),
@@ -138,20 +154,12 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .background(Color(0xFF2563EB), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val initial = userName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "U"
-                            Text(
-                                text = initial,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
+                        UserAvatar(
+                            name = userName,
+                            imagePath = userImagePath,
+                            size = 58.dp,
+                            fontSize = 24.sp
+                        )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -192,7 +200,12 @@ fun ProfileScreen(
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "✏️", fontSize = 14.sp, color = Color(0xFF2563EB))
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Profile",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Edit Profile",
@@ -207,7 +220,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Settings Section 1 (Individual Settings - Group Items Removed)
+            // Settings Section 1
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = Color.White,
@@ -215,9 +228,19 @@ fun ProfileScreen(
                 shadowElevation = 2.dp
             ) {
                 Column {
-                    ProfileSettingsRow("🔔", "Notifications", "2 reminders enabled", onClick = { onRemindersClicked() })
+                    ProfileSettingsRow(
+                        icon = Icons.Default.Notifications,
+                        title = "Notifications",
+                        subtitle = "2 reminders enabled",
+                        onClick = { onRemindersClicked() }
+                    )
                     HorizontalDivider(color = Color(0xFFF1F5F9))
-                    ProfileSettingsRow("🌐", "Language", "English", onClick = { onLanguageClicked() })
+                    ProfileSettingsRow(
+                        icon = Icons.Default.Language,
+                        title = "Language",
+                        subtitle = "English",
+                        onClick = { onLanguageClicked() }
+                    )
                 }
             }
 
@@ -231,11 +254,26 @@ fun ProfileScreen(
                 shadowElevation = 2.dp
             ) {
                 Column {
-                    ProfileSettingsRow("👤", "Account settings", "Personal details & security", onClick = { onSettingsClicked() })
+                    ProfileSettingsRow(
+                        icon = Icons.Default.Person,
+                        title = "Account settings",
+                        subtitle = "Personal details & security",
+                        onClick = { onSettingsClicked() }
+                    )
                     HorizontalDivider(color = Color(0xFFF1F5F9))
-                    ProfileSettingsRow("🛡️", "Privacy & data", "Your documents, your control", onClick = { onSettingsClicked() })
+                    ProfileSettingsRow(
+                        icon = Icons.Default.Security,
+                        title = "Privacy & data",
+                        subtitle = "Your documents, your control",
+                        onClick = { onSettingsClicked() }
+                    )
                     HorizontalDivider(color = Color(0xFFF1F5F9))
-                    ProfileSettingsRow("❓", "Help and Support", "Guides and contact options", onClick = { onHelpClicked() })
+                    ProfileSettingsRow(
+                        icon = Icons.AutoMirrored.Filled.Help,
+                        title = "Help and Support",
+                        subtitle = "Guides and contact options",
+                        onClick = { onHelpClicked() }
+                    )
                 }
             }
 
@@ -247,6 +285,7 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .clickable {
                         UserSession.clear()
+                        SessionManager.logout(context)
                         onLogoutClicked()
                     },
                 color = Color(0xFFFEF2F2),
@@ -259,7 +298,12 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🚪", fontSize = 16.sp, color = Color(0xFFEF4444))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Logout",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Logout",
@@ -273,90 +317,391 @@ fun ProfileScreen(
         }
     }
 
-    // Edit Profile Dialog
+    // Comprehensive Edit Profile Dialog
     if (showEditProfileDialog) {
-        var tempName by remember { mutableStateOf(userName) }
-        var tempEmail by remember { mutableStateOf(userEmail) }
-        var tempRole by remember { mutableStateOf(userRole) }
-
-        AlertDialog(
-            onDismissRequest = { showEditProfileDialog = false },
-            title = {
-                Text(text = "Edit Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
-            },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Column {
-                        Text(text = "Full Name", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        OutlinedTextField(
-                            value = tempName,
-                            onValueChange = { tempName = it },
-                            singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Column {
-                        Text(text = "Email Address", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        OutlinedTextField(
-                            value = tempEmail,
-                            onValueChange = { tempEmail = it },
-                            singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Column {
-                        Text(text = "Role & Institution", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        OutlinedTextField(
-                            value = tempRole,
-                            onValueChange = { tempRole = it },
-                            singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val userId = UserSession.currentUser?.id ?: 1
-                        userName = tempName
-                        userEmail = tempEmail
-                        userRole = tempRole
-                        showEditProfileDialog = false
-                        coroutineScope.launch {
-                            AuthRepository.updateProfile(userId, tempName, tempEmail, tempRole)
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(text = "Save", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditProfileDialog = false }) {
-                    Text(text = "Cancel", color = Color(0xFF64748B))
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(16.dp)
+        EditProfileDialog(
+            currentName = userName,
+            currentEmail = userEmail,
+            currentRole = userRole,
+            currentImagePath = userImagePath,
+            onDismiss = { showEditProfileDialog = false },
+            onProfileUpdated = { updatedUser ->
+                userName = updatedUser.name
+                userEmail = updatedUser.email
+                userRole = updatedUser.role
+                userImagePath = updatedUser.imagePath
+                showEditProfileDialog = false
+            }
         )
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ProfileSettingsRow(icon: String, title: String, subtitle: String, onClick: () -> Unit = {}) {
+fun EditProfileDialog(
+    currentName: String,
+    currentEmail: String,
+    currentRole: String,
+    currentImagePath: String?,
+    onDismiss: () -> Unit,
+    onProfileUpdated: (User) -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var tempName by remember { mutableStateOf(currentName) }
+    var tempEmail by remember { mutableStateOf(currentEmail) }
+    var tempRole by remember { mutableStateOf(currentRole) }
+    var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var selectedBase64 by remember { mutableStateOf<String?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Launcher for picking an image from Gallery
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    val originalBitmap = BitmapFactory.decodeStream(stream)
+                    if (originalBitmap != null) {
+                        // Downscale bitmap if dimensions exceed 800px for efficient storage & transmission
+                        val maxDim = 800
+                        val width = originalBitmap.width
+                        val height = originalBitmap.height
+                        val scaledBitmap = if (width > maxDim || height > maxDim) {
+                            val ratio = width.toFloat() / height.toFloat()
+                            val (w, h) = if (width > height) {
+                                maxDim to (maxDim / ratio).toInt()
+                            } else {
+                                (maxDim * ratio).toInt() to maxDim
+                            }
+                            Bitmap.createScaledBitmap(originalBitmap, w, h, true)
+                        } else {
+                            originalBitmap
+                        }
+
+                        val baos = ByteArrayOutputStream()
+                        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
+                        val bytes = baos.toByteArray()
+                        selectedBase64 = "data:image/jpeg;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        selectedBitmap = scaledBitmap
+                    }
+                }
+            } catch (e: Exception) {
+                errorMessage = "Failed to load image: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Edit Profile",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A)
+                )
+                IconButton(
+                    onClick = onDismiss,
+                    enabled = !isSaving,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color(0xFF64748B)
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Profile Picture with Camera Action Badge
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clickable(enabled = !isSaving) {
+                            galleryLauncher.launch("image/*")
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    UserAvatar(
+                        name = tempName.ifBlank { "User" },
+                        imagePath = currentImagePath,
+                        previewBitmap = selectedBitmap,
+                        size = 96.dp,
+                        fontSize = 36.sp
+                    )
+
+                    // Camera Icon Overlay Badge at bottom-right
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(30.dp)
+                            .background(Color(0xFF2563EB), CircleShape)
+                            .border(2.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoCamera,
+                            contentDescription = "Change Photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                // Change Photo Button
+                OutlinedButton(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    enabled = !isSaving,
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, Color(0xFF2563EB)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2563EB)),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "Choose Photo from Gallery", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                if (errorMessage != null) {
+                    Surface(
+                        color = Color(0xFFFEF2F2),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = errorMessage ?: "",
+                            color = Color(0xFFEF4444),
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
+
+                // Full Name Input
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Full Name",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = tempName,
+                        onValueChange = {
+                            tempName = it
+                            errorMessage = null
+                        },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF2563EB))
+                        },
+                        placeholder = { Text("Enter your name", color = Color(0xFF94A3B8)) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving
+                    )
+                }
+
+                // Email Input
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Email ID",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = tempEmail,
+                        onValueChange = {
+                            tempEmail = it
+                            errorMessage = null
+                        },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2563EB))
+                        },
+                        placeholder = { Text("Enter your email", color = Color(0xFF94A3B8)) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving
+                    )
+                }
+
+                // Role Input & Quick Selection Chips
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Role & Designation",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = tempRole,
+                        onValueChange = {
+                            tempRole = it
+                            errorMessage = null
+                        },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(Icons.Default.School, contentDescription = null, tint = Color(0xFF2563EB))
+                        },
+                        placeholder = { Text("e.g. Student - Northbridge College", color = Color(0xFF94A3B8)) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Quick select role:",
+                        fontSize = 11.sp,
+                        color = Color(0xFF64748B),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val rolePresets = listOf("Student", "Faculty", "Researcher", "Staff", "Admin")
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        rolePresets.forEach { preset ->
+                            val isSelected = tempRole.contains(preset, ignoreCase = true)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    tempRole = if (preset == "Student") {
+                                        "Student - Northbridge College"
+                                    } else {
+                                        preset
+                                    }
+                                },
+                                label = { Text(preset, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFFEEF2FF),
+                                    selectedLabelColor = Color(0xFF2563EB)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val trimmedName = tempName.trim()
+                    val trimmedEmail = tempEmail.trim()
+                    val trimmedRole = tempRole.trim()
+
+                    if (trimmedName.isBlank()) {
+                        errorMessage = "Full Name cannot be empty"
+                        return@Button
+                    }
+                    if (trimmedEmail.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
+                        errorMessage = "Please enter a valid email address"
+                        return@Button
+                    }
+                    if (trimmedRole.isBlank()) {
+                        errorMessage = "Role cannot be empty"
+                        return@Button
+                    }
+
+                    isSaving = true
+                    errorMessage = null
+                    val userId = UserSession.currentUser?.id ?: SessionManager.getSavedUser(context)?.id ?: 1
+
+                    coroutineScope.launch {
+                        val result = AuthRepository.updateProfile(
+                            userId = userId,
+                            name = trimmedName,
+                            email = trimmedEmail,
+                            role = trimmedRole,
+                            imageBase64 = selectedBase64
+                        )
+                        result.onSuccess { updatedUser ->
+                            // Cache newly picked bitmap locally to profile_avatar_${userId}.jpg
+                            selectedBitmap?.let { bmp ->
+                                try {
+                                    val cachedFile = File(context.filesDir, "profile_avatar_${userId}.jpg")
+                                    FileOutputStream(cachedFile).use { out ->
+                                        bmp.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                    }
+                                } catch (_: Exception) {}
+                            }
+                            UserSession.currentUser = updatedUser
+                            val pass = SessionManager.getSavedPassword(context)
+                            SessionManager.saveSession(context, updatedUser, pass)
+                            Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                            onProfileUpdated(updatedUser)
+                        }.onFailure { err ->
+                            errorMessage = err.localizedMessage ?: "Failed to update profile. Please try again."
+                            isSaving = false
+                        }
+                    }
+                },
+                enabled = !isSaving,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Saving...", color = Color.White)
+                } else {
+                    Text("Save Changes", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isSaving
+            ) {
+                Text(text = "Cancel", color = Color(0xFF64748B))
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun ProfileSettingsRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    iconTint: Color = Color(0xFF2563EB),
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -370,10 +715,17 @@ fun ProfileSettingsRow(icon: String, title: String, subtitle: String, onClick: (
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(iconTint.copy(alpha = 0.1f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = icon, fontSize = 18.sp, color = Color(0xFF2563EB))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp)
+                )
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f, fill = false)) {
@@ -396,7 +748,12 @@ fun ProfileSettingsRow(icon: String, title: String, subtitle: String, onClick: (
             }
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "›", fontSize = 20.sp, color = Color(0xFF94A3B8))
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = Color(0xFF94A3B8),
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -436,15 +793,16 @@ fun SettingsAndPrivacyScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "←",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155),
-                            modifier = Modifier
-                                .clickable { onBackClicked() }
-                                .padding(end = 12.dp)
-                        )
+                        IconButton(
+                            onClick = onBackClicked,
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF334155)
+                            )
+                        }
                         Text(
                             text = "Settings & privacy",
                             fontSize = 24.sp,
@@ -452,7 +810,12 @@ fun SettingsAndPrivacyScreen(
                             color = Color(0xFF1E293B)
                         )
                     }
-                    Text(text = "🛡️", fontSize = 20.sp, color = Color(0xFF2563EB))
+                    Icon(
+                        imageVector = Icons.Default.Security,
+                        contentDescription = null,
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -509,13 +872,30 @@ fun SettingsAndPrivacyScreen(
                     shadowElevation = 2.dp
                 ) {
                     Column {
-                        ProfileSettingsRow("🌐", "Language", "English", onClick = { onLanguageClicked() })
+                        ProfileSettingsRow(
+                            icon = Icons.Default.Language,
+                            title = "Language",
+                            subtitle = "English",
+                            onClick = { onLanguageClicked() }
+                        )
                         HorizontalDivider(color = Color(0xFFF1F5F9))
-                        ProfileSettingsRow("🔔", "Default reminders", "1 day before - 9:00 AM")
+                        ProfileSettingsRow(
+                            icon = Icons.Default.Notifications,
+                            title = "Default reminders",
+                            subtitle = "1 day before - 9:00 AM"
+                        )
                         HorizontalDivider(color = Color(0xFFF1F5F9))
-                        ProfileSettingsRow("🔓", "Document privacy", "Private unless you explicitly share")
+                        ProfileSettingsRow(
+                            icon = Icons.Default.LockOpen,
+                            title = "Document privacy",
+                            subtitle = "Private unless you explicitly share"
+                        )
                         HorizontalDivider(color = Color(0xFFF1F5F9))
-                        ProfileSettingsRow("🗄️", "Data export", "Documents and tasks - Export ZIP")
+                        ProfileSettingsRow(
+                            icon = Icons.Default.Archive,
+                            title = "Data export",
+                            subtitle = "Documents and tasks - Export ZIP"
+                        )
                     }
                 }
 
@@ -529,18 +909,23 @@ fun SettingsAndPrivacyScreen(
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "🛡️", fontSize = 16.sp, color = Color(0xFF2563EB))
+                    Icon(
+                        imageVector = Icons.Default.Security,
+                        contentDescription = null,
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Sharing requires recipient authorization. No data is stored or exported in this demo.",
+                        text = "Sharing requires recipient authorization. No data is stored or exported without your permission.",
                         fontSize = 12.sp,
                         color = Color(0xFF2563EB),
                         lineHeight = 16.sp
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Account control
                 Text(
                     text = "Account control",
@@ -549,7 +934,7 @@ fun SettingsAndPrivacyScreen(
                     color = Color(0xFF1E293B)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = Color.White,
@@ -570,9 +955,9 @@ fun SettingsAndPrivacyScreen(
                             color = Color(0xFF64748B),
                             lineHeight = 16.sp
                         )
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         Button(
                             onClick = {
                                 coroutineScope.launch {
@@ -587,7 +972,12 @@ fun SettingsAndPrivacyScreen(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🗑️", fontSize = 14.sp)
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color(0xFFEF4444),
+                                    modifier = Modifier.size(16.dp)
+                                )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(text = "Delete Account", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
                             }
@@ -625,15 +1015,16 @@ fun LanguageSettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "←",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155),
-                            modifier = Modifier
-                                .clickable { onBackClicked() }
-                                .padding(end = 12.dp)
-                        )
+                        IconButton(
+                            onClick = onBackClicked,
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF334155)
+                            )
+                        }
                         Text(
                             text = "Language",
                             fontSize = 24.sp,
@@ -641,7 +1032,12 @@ fun LanguageSettingsScreen(
                             color = Color(0xFF1E293B)
                         )
                     }
-                    Text(text = "🌐", fontSize = 20.sp, color = Color(0xFF2563EB))
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -692,7 +1088,12 @@ fun LanguageRow(languageName: String, isSelected: Boolean) {
                     .background(Color(0xFF2563EB), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "✓", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
             }
         } else {
             Box(
@@ -730,15 +1131,16 @@ fun HelpSupportScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "←",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155),
-                            modifier = Modifier
-                                .clickable { onBackClicked() }
-                                .padding(end = 12.dp)
-                        )
+                        IconButton(
+                            onClick = onBackClicked,
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF334155)
+                            )
+                        }
                         Text(
                             text = "Help & Support",
                             fontSize = 24.sp,
@@ -746,7 +1148,12 @@ fun HelpSupportScreen(
                             color = Color(0xFF1E293B)
                         )
                     }
-                    Text(text = "❓", fontSize = 20.sp, color = Color(0xFF2563EB))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Help,
+                        contentDescription = null,
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -758,7 +1165,7 @@ fun HelpSupportScreen(
                     color = Color(0xFF1E293B)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = Color.White,
@@ -799,14 +1206,14 @@ fun FaqItem(question: String, answer: String?, isExpanded: Boolean) {
                 fontWeight = if (isExpanded) FontWeight.Bold else FontWeight.Medium,
                 color = Color(0xFF334155)
             )
-            Text(
-                text = if (isExpanded) "︿" else "﹀",
-                fontSize = 14.sp,
-                color = Color(0xFF64748B),
-                fontWeight = FontWeight.Bold
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = Color(0xFF64748B),
+                modifier = Modifier.size(18.dp)
             )
         }
-        
+
         if (isExpanded && answer != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
