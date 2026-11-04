@@ -60,6 +60,20 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.io.File
 import java.io.InputStream
+import android.content.Context
+import android.provider.OpenableColumns
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun DocumentScannerCornerGuides(
@@ -511,7 +525,16 @@ fun ScanDocumentScreen(
                             }
 
                             Button(
-                                onClick = onUseDocument,
+                                onClick = {
+                                    ActiveDocumentSession.setDocument(
+                                        uri = null,
+                                        bitmap = capturedBitmap,
+                                        name = "scanned_notice_" + System.currentTimeMillis() + ".png",
+                                        sizeText = "Live Camera Scan",
+                                        image = true
+                                    )
+                                    onUseDocument()
+                                },
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(52.dp),
@@ -613,14 +636,646 @@ fun ScanDocumentScreen(
     }
 }
 
+object ActiveDocumentSession {
+    var documentUri by mutableStateOf<Uri?>(null)
+    var documentBitmap by mutableStateOf<Bitmap?>(null)
+    var documentName by mutableStateOf<String>("innovation-week-2026.pdf")
+    var documentSizeText by mutableStateOf<String>("2.4 MB")
+    var isImage by mutableStateOf<Boolean>(false)
+    var isReady by mutableStateOf<Boolean>(true)
+
+    fun setDocument(
+        uri: Uri?,
+        bitmap: Bitmap?,
+        name: String,
+        sizeText: String,
+        image: Boolean
+    ) {
+        documentUri = uri
+        documentBitmap = bitmap
+        documentName = name
+        documentSizeText = sizeText
+        isImage = image
+        isReady = true
+    }
+
+    fun clear() {
+        documentUri = null
+        documentBitmap = null
+        documentName = "innovation-week-2026.pdf"
+        documentSizeText = "2.4 MB"
+        isImage = false
+        isReady = false
+    }
+}
+
+fun getFileNameAndSize(context: Context, uri: Uri): Pair<String, Long> {
+    var name = "notice_${System.currentTimeMillis()}"
+    var size = 0L
+    try {
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (cursor.moveToFirst()) {
+                    if (nameIndex != -1) {
+                        name = cursor.getString(nameIndex) ?: name
+                    }
+                    if (sizeIndex != -1) {
+                        size = cursor.getLong(sizeIndex)
+                    }
+                }
+            }
+        } else if (uri.scheme == "file") {
+            uri.path?.let { path ->
+                val file = File(path)
+                name = file.name
+                size = file.length()
+            }
+        }
+    } catch (_: Exception) {}
+    return Pair(name, size)
+}
+
+fun formatDocumentSize(bytes: Long): String {
+    if (bytes <= 0L) return "Document ready"
+    val kb = bytes / 1024.0
+    val mb = kb / 1024.0
+    return when {
+        mb >= 1.0 -> String.format(Locale.US, "%.1f MB", mb)
+        kb >= 1.0 -> String.format(Locale.US, "%.0f KB", kb)
+        else -> "$bytes B"
+    }
+}
+
 @Composable
 fun UploadDocumentScreen(
     onBackClicked: () -> Unit,
+    onContinue: () -> Unit,
+    onScanClicked: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var selectedUri by remember { mutableStateOf<Uri?>(ActiveDocumentSession.documentUri) }
+    var selectedBitmap by remember { mutableStateOf<Bitmap?>(ActiveDocumentSession.documentBitmap) }
+    var fileName by remember { mutableStateOf(ActiveDocumentSession.documentName) }
+    var fileSizeText by remember { mutableStateOf(ActiveDocumentSession.documentSizeText) }
+    var isImageFile by remember { mutableStateOf(ActiveDocumentSession.isImage) }
+    var hasFile by remember { mutableStateOf(ActiveDocumentSession.documentUri != null || ActiveDocumentSession.documentBitmap != null) }
+    var isUploading by remember { mutableStateOf(false) }
+    var uploadProgress by remember { mutableStateOf(if (hasFile) 1f else 0f) }
+
+    fun processUri(uri: Uri, isFromGallery: Boolean) {
+        try {
+            val (name, size) = getFileNameAndSize(context, uri)
+            val sizeFormatted = formatDocumentSize(size)
+            val mimeType = context.contentResolver.getType(uri) ?: ""
+            val isImg = isFromGallery || mimeType.startsWith("image/") ||
+                    name.endsWith(".jpg", true) || name.endsWith(".png", true) || name.endsWith(".jpeg", true)
+
+            var bmp: Bitmap? = null
+            if (isImg) {
+                try {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        val opts = BitmapFactory.Options().apply { inSampleSize = 2 }
+                        bmp = BitmapFactory.decodeStream(stream, null, opts)
+                    }
+                } catch (_: Exception) {}
+            }
+
+            selectedUri = uri
+            selectedBitmap = bmp
+            fileName = name
+            fileSizeText = sizeFormatted
+            isImageFile = isImg
+            hasFile = true
+            isUploading = true
+            uploadProgress = 0.25f
+
+            ActiveDocumentSession.setDocument(
+                uri = uri,
+                bitmap = bmp,
+                name = name,
+                sizeText = sizeFormatted,
+                image = isImg
+            )
+
+            coroutineScope.launch {
+                delay(120)
+                uploadProgress = 0.70f
+                delay(150)
+                uploadProgress = 1.0f
+                isUploading = false
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Could not open selected file: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Opens phone Gallery to pick photos/scans
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            processUri(uri, isFromGallery = true)
+        }
+    }
+
+    // Opens phone File manager / document picker for PDFs and files
+    val fileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            processUri(uri, isFromGallery = false)
+        }
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFFF8FAFC)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Top Header Row with Material Icons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .background(Color(0xFFEEF2FF), CircleShape)
+                                .clickable { onBackClicked() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "DOCUMENT CAPTURE & PROCESSING",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF94A3B8),
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Upload Document",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Select a notice, timetable, circular or document from your phone to automatically extract deadlines and actionable tasks.",
+                    fontSize = 13.sp,
+                    color = Color(0xFF64748B),
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Realistic Main Upload Dropzone Area
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(1.dp, RoundedCornerShape(20.dp))
+                        .background(Color(0xFFEEF2FF), RoundedCornerShape(20.dp))
+                        .border(BorderStroke(1.5.dp, Color(0xFFC7D2FE)), RoundedCornerShape(20.dp))
+                        .clickable {
+                            fileLauncher.launch("*/*")
+                        }
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(Color.White, CircleShape)
+                                .shadow(2.dp, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Upload",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = if (hasFile) "Tap to change document" else "Tap to choose notice or file",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Supports PDF, JPG, PNG or DOCX • Up to 25 MB",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("PDF", "JPG", "PNG", "DOCX").forEach { format ->
+                                Surface(
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(6.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                                ) {
+                                    Text(
+                                        text = format,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF475569),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Action Buttons: Real Phone Gallery & Real Phone Browse Files
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Choose from Gallery Button
+                    OutlinedButton(
+                        onClick = {
+                            galleryLauncher.launch("image/*")
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.5.dp, Color(0xFF93C5FD)),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFEFF6FF))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PhotoLibrary,
+                                contentDescription = "Gallery",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Gallery",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "Photos & Scans",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+
+                    // Browse Files Button
+                    OutlinedButton(
+                        onClick = {
+                            fileLauncher.launch("*/*")
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.5.dp, Color(0xFFCBD5E1)),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FolderOpen,
+                                contentDescription = "Browse Files",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Browse Files",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "PDF & Docs",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Scan Physical Notice Option
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onScanClicked() },
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color.White,
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CameraAlt,
+                                    contentDescription = "Camera",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Scan Physical Document",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "Use original camera with autofocus",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open camera",
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Selected File Status & Preview Card
+                if (hasFile) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(2.dp, RoundedCornerShape(16.dp))
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    if (isImageFile && selectedBitmap != null) {
+                                        Image(
+                                            bitmap = selectedBitmap!!.asImageBitmap(),
+                                            contentDescription = "Thumbnail",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .background(
+                                                    if (fileName.endsWith(".pdf", true)) Color(0xFFFEE2E2) else Color(0xFFEEF2FF),
+                                                    RoundedCornerShape(10.dp)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = if (fileName.endsWith(".pdf", true)) Icons.Default.PictureAsPdf else Icons.Default.Description,
+                                                contentDescription = "Document",
+                                                tint = if (fileName.endsWith(".pdf", true)) Color(0xFFDC2626) else Color(0xFF2563EB),
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = fileName,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0F172A),
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = if (isUploading) "Uploading • $fileSizeText" else "$fileSizeText • Ready",
+                                                fontSize = 11.sp,
+                                                color = Color(0xFF64748B)
+                                            )
+                                            if (!isUploading) {
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Icon(
+                                                    imageVector = Icons.Default.CheckCircle,
+                                                    contentDescription = "Ready",
+                                                    tint = Color(0xFF16A34A),
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        selectedUri = null
+                                        selectedBitmap = null
+                                        hasFile = false
+                                        ActiveDocumentSession.clear()
+                                    },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Remove document",
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Linear progress indicator
+                            LinearProgressIndicator(
+                                progress = { uploadProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(5.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = Color(0xFF2563EB),
+                                trackColor = Color(0xFFE2E8F0)
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = Color(0xFF16A34A),
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Verified for OCR & Action Extraction",
+                                        fontSize = 10.sp,
+                                        color = Color(0xFF16A34A),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+
+                                Text(
+                                    text = if (isUploading) "${(uploadProgress * 100).toInt()}%" else "100%",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (uploadProgress >= 1f) Color(0xFF16A34A) else Color(0xFF2563EB)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Bottom Continue Action Button
+            Button(
+                onClick = {
+                    if (!hasFile) {
+                        Toast.makeText(context, "Please choose a photo or document first", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    onContinue()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2563EB)
+                )
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Continue to Preview",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Continue",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DocumentPreviewScreen(
+    onBackClicked: () -> Unit,
     onContinue: () -> Unit
 ) {
-    var uploadedFileName by remember { mutableStateOf<String?>("innovation-week-2026.pdf") }
-    var uploadProgress by remember { mutableStateOf(0.72f) }
-    var uploadStatusText by remember { mutableStateOf("2.4 MB • Uploading • 72%") }
+    val documentTitle = ActiveDocumentSession.documentName.ifBlank { "INNOVATION WEEK 2026" }
+    val documentSize = ActiveDocumentSession.documentSizeText
+    val documentBitmap = ActiveDocumentSession.documentBitmap
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -646,17 +1301,22 @@ fun UploadDocumentScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .background(Color(0xFFEEF2FF), CircleShape)
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "C • DOCUMENT CAPTURE & PROCESSING",
+                                text = "DOCUMENT CAPTURE & PROCESSING",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF94A3B8),
@@ -664,7 +1324,7 @@ fun UploadDocumentScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Upload Document",
+                                text = "Document Preview",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF0F172A)
@@ -672,180 +1332,103 @@ fun UploadDocumentScreen(
                         }
                     }
 
-                    Text(text = "•••", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4F46E5), letterSpacing = 2.sp)
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = Color(0xFF64748B)
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Bring a notice from your device.",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B)
-                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Realistic Document Visual Card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFEEF2FF), RoundedCornerShape(20.dp))
-                        .clickable {
-                            uploadedFileName = "innovation-week-2026.pdf"
-                            uploadProgress = 1.0f
-                            uploadStatusText = "2.4 MB • Complete • 100%"
-                        }
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                        .shadow(3.dp, RoundedCornerShape(16.dp))
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                        .padding(18.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "☁️", fontSize = 32.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Choose a document",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "PDF, JPG or PNG • Up to 20 MB",
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            uploadedFileName = "scanned_notice_photo.png"
-                            uploadProgress = 1.0f
-                            uploadStatusText = "1.8 MB • Ready"
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🖼️", fontSize = 14.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Gallery", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        }
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            uploadedFileName = "innovation-week-2026.pdf"
-                            uploadProgress = 0.72f
-                            uploadStatusText = "2.4 MB • Uploading • 72%"
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "📁", fontSize = 14.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Browse Files", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        uploadedFileName = "shared-announcement.pdf"
-                        uploadProgress = 1.0f
-                        uploadStatusText = "1.2 MB • Ready"
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🔗", fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Import from Share", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (uploadedFileName != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(2.dp, RoundedCornerShape(16.dp))
-                            .background(Color.White, RoundedCornerShape(16.dp))
-                            .padding(16.dp)
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = "📄", fontSize = 24.sp)
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = uploadedFileName ?: "",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF0F172A)
-                                        )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = uploadStatusText,
-                                            fontSize = 11.sp,
-                                            color = Color(0xFF64748B)
-                                        )
-                                    }
-                                }
-
-                                Text(text = "✕", fontSize = 14.sp, color = Color(0xFF94A3B8), modifier = Modifier.clickable { uploadedFileName = null })
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            Box(
+                    Column {
+                        if (documentBitmap != null) {
+                            Image(
+                                bitmap = documentBitmap.asImageBitmap(),
+                                contentDescription = "Document Preview",
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(4.dp)
-                                    .background(Color(0xFFE2E8F0), RoundedCornerShape(2.dp))
+                                    .height(260.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Fit
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth(uploadProgress)
-                                        .height(4.dp)
-                                        .background(Color(0xFF2563EB), RoundedCornerShape(2.dp))
-                                )
+                                        .size(40.dp)
+                                        .background(
+                                            if (documentTitle.endsWith(".pdf", true)) Color(0xFFFEE2E2) else Color(0xFFEEF2FF),
+                                            RoundedCornerShape(8.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (documentTitle.endsWith(".pdf", true)) Icons.Default.PictureAsPdf else Icons.Default.Description,
+                                        contentDescription = null,
+                                        tint = if (documentTitle.endsWith(".pdf", true)) Color(0xFFDC2626) else Color(0xFF2563EB),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = documentTitle,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A),
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "$documentSize • Ready to extract",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF64748B)
+                                    )
+                                }
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = "Illustrative progress • No file transfer",
-                                fontSize = 10.sp,
-                                color = Color(0xFF94A3B8)
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Verified",
+                                tint = Color(0xFF16A34A),
+                                modifier = Modifier.size(20.dp)
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Submit proposal by 20 October 2026, 5:00 PM.",
+                            fontSize = 13.sp,
+                            color = Color(0xFF334155),
+                            lineHeight = 18.sp
+                        )
                     }
                 }
             }
@@ -864,18 +1447,13 @@ fun UploadDocumentScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "→",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Text(text = "Continue to Notice Details", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Continue to Preview",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Continue",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -883,106 +1461,6 @@ fun UploadDocumentScreen(
     }
 }
 
-@Composable
-fun DocumentPreviewScreen(
-    onBackClicked: () -> Unit,
-    onContinue: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8FAFC)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(Color(0xFFEEF2FF), CircleShape)
-                                .clickable { onBackClicked() },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "C • DOCUMENT CAPTURE & PROCESSING",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
-                                letterSpacing = 1.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Document Preview",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
-                    }
-
-                    Text(text = "•••", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4F46E5), letterSpacing = 2.sp)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(4.dp, RoundedCornerShape(16.dp))
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .padding(18.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = "INNOVATION WEEK 2026",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Submit proposal by 20 October 2026, 5:00 PM.",
-                            fontSize = 12.sp,
-                            color = Color(0xFF334155)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { onContinue() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
-            ) {
-                Text(text = "Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
-        }
-    }
-}
 
 @Composable
 fun NoticeDetailsScreen(

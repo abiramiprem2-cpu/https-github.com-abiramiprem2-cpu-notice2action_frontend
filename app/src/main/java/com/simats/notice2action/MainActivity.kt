@@ -169,7 +169,8 @@ class MainActivity : ComponentActivity() {
                         AppScreen.UPLOAD_DOCUMENT -> {
                             UploadDocumentScreen(
                                 onBackClicked = { currentScreen = AppScreen.MAIN },
-                                onContinue = { currentScreen = AppScreen.DOCUMENT_PREVIEW }
+                                onContinue = { currentScreen = AppScreen.DOCUMENT_PREVIEW },
+                                onScanClicked = { currentScreen = AppScreen.SCAN_DOCUMENT }
                             )
                         }
                         AppScreen.DOCUMENT_PREVIEW -> {
