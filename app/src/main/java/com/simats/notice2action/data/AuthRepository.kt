@@ -33,7 +33,7 @@ object AuthRepository {
                     id = userObj.getInt("id"),
                     name = resolveName(userObj.optString("name", ""), userEmail),
                     email = userEmail,
-                    role = userObj.optString("role", "Student - Northbridge College"),
+                    role = userObj.optString("role", ""),
                     imagePath = userObj.optNullableString("image_path"),
                     phone = userObj.optNullableString("phone"),
                     address = userObj.optNullableString("address")
@@ -51,7 +51,7 @@ object AuthRepository {
         }
     }
 
-    suspend fun signup(name: String, email: String, password: String, role: String = "Student - Northbridge College"): Result<User> {
+    suspend fun signup(name: String, email: String, password: String, role: String = ""): Result<User> {
         return try {
             val body = JSONObject().apply {
                 put("name", name.trim())
@@ -112,7 +112,7 @@ object AuthRepository {
                     id = prof.getInt("id"),
                     name = resolveName(prof.optString("name", ""), profEmail),
                     email = profEmail,
-                    role = prof.optString("role", "Student - Northbridge College"),
+                    role = prof.optString("role", ""),
                     imagePath = prof.optNullableString("image_path"),
                     phone = prof.optNullableString("phone"),
                     address = prof.optNullableString("address")
@@ -133,7 +133,7 @@ object AuthRepository {
         userId: Int,
         name: String,
         email: String,
-        role: String,
+        role: String? = null,
         phone: String? = null,
         address: String? = null,
         imageBase64: String? = null
@@ -143,7 +143,7 @@ object AuthRepository {
                 put("user_id", userId)
                 put("name", name.trim())
                 put("email", email.trim())
-                put("role", role.trim())
+                if (!role.isNullOrBlank()) put("role", role.trim())
                 if (phone != null) put("phone", phone.trim())
                 if (address != null) put("address", address.trim())
                 if (!imageBase64.isNullOrBlank()) put("image_base64", imageBase64)
@@ -156,7 +156,7 @@ object AuthRepository {
                     id = prof.getInt("id"),
                     name = resolveName(prof.optString("name", name), profEmail),
                     email = profEmail,
-                    role = prof.optString("role", role),
+                    role = prof.optString("role", role ?: ""),
                     imagePath = prof.optNullableString("image_path"),
                     phone = prof.optNullableString("phone"),
                     address = prof.optNullableString("address")

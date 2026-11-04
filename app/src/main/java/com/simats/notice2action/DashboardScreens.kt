@@ -533,9 +533,6 @@ fun NavigationDrawerScreen(
         u?.email?.trim()?.ifBlank { null }
             ?: SessionManager.getSavedEmail(context).ifBlank { "" }
     }
-    val drawerRole = remember(resolvedUser) {
-        resolvedUser?.role?.ifBlank { "Student - Northbridge College" } ?: "Student - Northbridge College"
-    }
     val drawerImagePath = remember(resolvedUser, UserSession.currentUser) {
         val u = resolvedUser ?: UserSession.currentUser ?: SessionManager.getSavedUser(context)
         u?.imagePath
@@ -615,21 +612,6 @@ fun NavigationDrawerScreen(
                             fontSize = 12.sp,
                             color = Color(0xFF64748B)
                         )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = drawerRole,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF4F46E5)
-                            )
-                        }
 
                         Spacer(modifier = Modifier.height(24.dp))
                         HorizontalDivider(color = Color(0xFFF1F5F9))

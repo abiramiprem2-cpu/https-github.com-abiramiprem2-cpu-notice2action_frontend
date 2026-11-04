@@ -66,7 +66,6 @@ fun ProfileScreen(
         )
     }
     var userEmail by remember { mutableStateOf(initialUser?.email ?: "") }
-    var userRole by remember { mutableStateOf(initialUser?.role ?: "Student - Northbridge College") }
     var userImagePath by remember { mutableStateOf(initialUser?.imagePath) }
 
     LaunchedEffect(Unit) {
@@ -76,7 +75,6 @@ fun ProfileScreen(
             res.onSuccess { fetched ->
                 userName = fetched.name
                 userEmail = fetched.email
-                userRole = fetched.role
                 userImagePath = fetched.imagePath
                 UserSession.currentUser = fetched
                 val pass = SessionManager.getSavedPassword(context)
@@ -175,15 +173,6 @@ fun ProfileScreen(
                                 text = userEmail,
                                 fontSize = 12.sp,
                                 color = Color(0xFF64748B),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = userRole,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF2563EB),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -322,13 +311,11 @@ fun ProfileScreen(
         EditProfileDialog(
             currentName = userName,
             currentEmail = userEmail,
-            currentRole = userRole,
             currentImagePath = userImagePath,
             onDismiss = { showEditProfileDialog = false },
             onProfileUpdated = { updatedUser ->
                 userName = updatedUser.name
                 userEmail = updatedUser.email
-                userRole = updatedUser.role
                 userImagePath = updatedUser.imagePath
                 showEditProfileDialog = false
             }
@@ -336,12 +323,10 @@ fun ProfileScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditProfileDialog(
     currentName: String,
     currentEmail: String,
-    currentRole: String,
     currentImagePath: String?,
     onDismiss: () -> Unit,
     onProfileUpdated: (User) -> Unit
@@ -351,7 +336,6 @@ fun EditProfileDialog(
 
     var tempName by remember { mutableStateOf(currentName) }
     var tempEmail by remember { mutableStateOf(currentEmail) }
-    var tempRole by remember { mutableStateOf(currentRole) }
     var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var selectedBase64 by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
@@ -549,66 +533,6 @@ fun EditProfileDialog(
                         enabled = !isSaving
                     )
                 }
-
-                // Role Input & Quick Selection Chips
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Role & Designation",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF334155)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = tempRole,
-                        onValueChange = {
-                            tempRole = it
-                            errorMessage = null
-                        },
-                        singleLine = true,
-                        leadingIcon = {
-                            Icon(Icons.Default.School, contentDescription = null, tint = Color(0xFF2563EB))
-                        },
-                        placeholder = { Text("e.g. Student - Northbridge College", color = Color(0xFF94A3B8)) },
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isSaving
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Quick select role:",
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B),
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    val rolePresets = listOf("Student", "Faculty", "Researcher", "Staff", "Admin")
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        rolePresets.forEach { preset ->
-                            val isSelected = tempRole.contains(preset, ignoreCase = true)
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    tempRole = if (preset == "Student") {
-                                        "Student - Northbridge College"
-                                    } else {
-                                        preset
-                                    }
-                                },
-                                label = { Text(preset, fontSize = 11.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0xFFEEF2FF),
-                                    selectedLabelColor = Color(0xFF2563EB)
-                                )
-                            )
-                        }
-                    }
-                }
             }
         },
         confirmButton = {
@@ -616,7 +540,6 @@ fun EditProfileDialog(
                 onClick = {
                     val trimmedName = tempName.trim()
                     val trimmedEmail = tempEmail.trim()
-                    val trimmedRole = tempRole.trim()
 
                     if (trimmedName.isBlank()) {
                         errorMessage = "Full Name cannot be empty"
@@ -624,10 +547,6 @@ fun EditProfileDialog(
                     }
                     if (trimmedEmail.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
                         errorMessage = "Please enter a valid email address"
-                        return@Button
-                    }
-                    if (trimmedRole.isBlank()) {
-                        errorMessage = "Role cannot be empty"
                         return@Button
                     }
 
@@ -640,7 +559,6 @@ fun EditProfileDialog(
                             userId = userId,
                             name = trimmedName,
                             email = trimmedEmail,
-                            role = trimmedRole,
                             imageBase64 = selectedBase64
                         )
                         result.onSuccess { updatedUser ->

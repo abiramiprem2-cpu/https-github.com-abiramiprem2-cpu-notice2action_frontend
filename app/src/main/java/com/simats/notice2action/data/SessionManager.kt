@@ -71,7 +71,7 @@ object SessionManager {
             id = id,
             name = name,
             email = email,
-            role = prefs.getString(KEY_USER_ROLE, "Student - Northbridge College") ?: "Student - Northbridge College",
+            role = prefs.getString(KEY_USER_ROLE, "") ?: "",
             imagePath = prefs.getString(KEY_IMAGE_PATH, null),
             phone = prefs.getString(KEY_USER_PHONE, null),
             address = prefs.getString(KEY_USER_ADDRESS, null)
