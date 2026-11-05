@@ -1,4 +1,7 @@
-﻿package com.simats.notice2action
+package com.simats.notice2action
+
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -662,10 +665,10 @@ fun ScanDocumentScreen(
 object ActiveDocumentSession {
     var documentUri by mutableStateOf<Uri?>(null)
     var documentBitmap by mutableStateOf<Bitmap?>(null)
-    var documentName by mutableStateOf<String>("innovation-week-2026.pdf")
-    var documentSizeText by mutableStateOf<String>("2.4 MB")
+    var documentName by mutableStateOf<String>("")
+    var documentSizeText by mutableStateOf<String>("")
     var isImage by mutableStateOf<Boolean>(false)
-    var isReady by mutableStateOf<Boolean>(true)
+    var isReady by mutableStateOf<Boolean>(false)
 
     fun setDocument(
         uri: Uri?,
@@ -687,14 +690,15 @@ object ActiveDocumentSession {
     fun clear() {
         documentUri = null
         documentBitmap = null
-        documentName = "innovation-week-2026.pdf"
-        documentSizeText = "2.4 MB"
+        documentName = ""
+        documentSizeText = ""
         isImage = false
         isReady = false
         DocumentAnalysisSession.activeResult = null
         DocumentAnalysisSession.isAnalyzing = false
     }
 }
+
 
 fun getFileNameAndSize(context: Context, uri: Uri): Pair<String, Long> {
     var name = "notice_${System.currentTimeMillis()}"
@@ -769,8 +773,21 @@ fun UploadDocumentScreen(
                         bmp = BitmapFactory.decodeStream(stream, null, opts)
                     }
                 } catch (_: Exception) {}
+            } else if (name.endsWith(".pdf", true) || mimeType == "application/pdf") {
+                try {
+                    context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                        val renderer = PdfRenderer(pfd)
+                        if (renderer.pageCount > 0) {
+                            val page = renderer.openPage(0)
+                            val thumbBmp = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
+                            page.render(thumbBmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                            page.close()
+                            bmp = thumbBmp
+                        }
+                        renderer.close()
+                    }
+                } catch (_: Exception) {}
             }
-
             selectedUri = uri
             selectedBitmap = bmp
             fileName = name
@@ -1301,14 +1318,41 @@ fun DocumentPreviewScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val documentTitle = ActiveDocumentSession.documentName.ifBlank { "INNOVATION WEEK 2026" }
-    val documentSize = ActiveDocumentSession.documentSizeText
+    val documentTitle = ActiveDocumentSession.documentName.ifBlank { "Notice Document" }
+    val documentSize = ActiveDocumentSession.documentSizeText.ifBlank { "Ready" }
     val documentBitmap = ActiveDocumentSession.documentBitmap
     val isOcrScanning = DocumentAnalysisSession.isAnalyzing
 
+    // Generate high-resolution PDF preview bitmap if document is a PDF
+    var pdfPreviewBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(ActiveDocumentSession.documentUri) {
+        if (documentBitmap == null && ActiveDocumentSession.documentUri != null) {
+            try {
+                val pfd = context.contentResolver.openFileDescriptor(ActiveDocumentSession.documentUri!!, "r")
+                if (pfd != null) {
+                    val renderer = PdfRenderer(pfd)
+                    if (renderer.pageCount > 0) {
+                        val page = renderer.openPage(0)
+                        val scale = 2f
+                        val bmp = Bitmap.createBitmap(
+                            (page.width * scale).toInt(),
+                            (page.height * scale).toInt(),
+                            Bitmap.Config.ARGB_8888
+                        )
+                        page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                        page.close()
+                        pdfPreviewBitmap = bmp
+                    }
+                    renderer.close()
+                    pfd.close()
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
     // Trigger on-device OCR and AI analysis in background if not yet loaded
     LaunchedEffect(documentTitle, documentBitmap, ActiveDocumentSession.documentUri) {
-        if (DocumentAnalysisSession.activeResult == null) {
+        if (DocumentAnalysisSession.activeResult == null && !DocumentAnalysisSession.isAnalyzing) {
             DocumentAnalysisSession.analyzeDocument(
                 context = context,
                 bitmap = documentBitmap,
@@ -1317,6 +1361,8 @@ fun DocumentPreviewScreen(
             )
         }
     }
+
+    val displayBitmap = documentBitmap ?: pdfPreviewBitmap
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -1399,9 +1445,9 @@ fun DocumentPreviewScreen(
                         .padding(18.dp)
                 ) {
                     Column {
-                        if (documentBitmap != null) {
+                        if (displayBitmap != null) {
                             Image(
-                                bitmap = documentBitmap.asImageBitmap(),
+                                bitmap = displayBitmap.asImageBitmap(),
                                 contentDescription = "Document Preview",
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1449,7 +1495,7 @@ fun DocumentPreviewScreen(
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "$documentSize • Ready for AI extraction",
+                                        text = "$documentSize â€¢ Ready for AI extraction",
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -1485,7 +1531,11 @@ fun DocumentPreviewScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = if (isOcrScanning) "Running on-device OCR & AI analysis..." else "OCR ready: Converts notice into simple words & actions",
+                                    text = if (isOcrScanning) {
+                                        "Running on-device OCR (${(DocumentAnalysisSession.analysisProgress * 100).toInt()}%)..."
+                                    } else {
+                                        "OCR ready: Converts notice into simple words & actions"
+                                    },
                                     fontSize = 12.sp,
                                     color = Color(0xFF1E40AF),
                                     fontWeight = FontWeight.Medium
@@ -1501,7 +1551,7 @@ fun DocumentPreviewScreen(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        if (DocumentAnalysisSession.activeResult == null) {
+                        if (DocumentAnalysisSession.activeResult == null && !DocumentAnalysisSession.isAnalyzing) {
                             DocumentAnalysisSession.analyzeDocument(
                                 context = context,
                                 bitmap = documentBitmap,
@@ -1522,21 +1572,240 @@ fun DocumentPreviewScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Continue to Notice Details",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Continue",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    if (isOcrScanning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Analyzing Document (${(DocumentAnalysisSession.analysisProgress * 100).toInt()}%)...",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Continue to Notice Details",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Continue",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun NoticeScanningScreen(
+    status: String,
+    progress: Float,
+    documentName: String,
+    onBackClicked: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFFF8FAFC)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(Color(0xFFEEF2FF), CircleShape)
+                            .clickable { onBackClicked() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "ON-DEVICE ML KIT OCR",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF94A3B8),
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Processing Document",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Realistic Animated Processing Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(3.dp, RoundedCornerShape(20.dp))
+                        .background(Color.White, RoundedCornerShape(20.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(20.dp))
+                        .padding(28.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier.size(110.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                progress = { if (progress > 0.05f) progress else 0.35f },
+                                modifier = Modifier.size(105.dp),
+                                color = Color(0xFF2563EB),
+                                strokeWidth = 6.dp,
+                                trackColor = Color(0xFFEFF6FF)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .background(Color(0xFFEEF2FF), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "AI Scanner",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = "Extracting Notice Details",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = documentName,
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = Color(0xFF2563EB),
+                            trackColor = Color(0xFFE2E8F0)
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Surface(
+                            color = Color(0xFFEFF6FF),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, Color(0xFFBFDBFE))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    color = Color(0xFF2563EB),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = status,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1E40AF)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Informational Feature Badges
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White,
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("On-device OCR extracts real text from photo / PDF", fontSize = 12.sp, color = Color(0xFF334155))
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Detects deadlines & creates actionable checklist", fontSize = 12.sp, color = Color(0xFF334155))
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Synthesizes plain-language summary in English & Tamil", fontSize = 12.sp, color = Color(0xFF334155))
+                        }
+                    }
+                }
+            }
+
+            // Bottom subtle indicator
+            Text(
+                text = "Notice2Action AI Engine â€¢ Powered by Google ML Kit",
+                fontSize = 11.sp,
+                color = Color(0xFF94A3B8),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         }
     }
 }
@@ -1547,8 +1816,32 @@ fun NoticeDetailsScreen(
     onGenerateActions: () -> Unit
 ) {
     val context = LocalContext.current
-    val analysis = DocumentAnalysisSession.activeResult
-        ?: DocumentAnalysisSession.synthesizeAnalysis("", ActiveDocumentSession.documentName)
+    val activeResult = DocumentAnalysisSession.activeResult
+    val isAnalyzing = DocumentAnalysisSession.isAnalyzing
+
+    // Trigger on-device analysis if not yet running and not ready
+    LaunchedEffect(ActiveDocumentSession.documentUri, ActiveDocumentSession.documentBitmap) {
+        if (!isAnalyzing && activeResult == null) {
+            DocumentAnalysisSession.analyzeDocument(
+                context = context,
+                bitmap = ActiveDocumentSession.documentBitmap,
+                uri = ActiveDocumentSession.documentUri,
+                fallbackTitle = ActiveDocumentSession.documentName.ifBlank { "Notice Document" }
+            )
+        }
+    }
+
+    if (activeResult == null || isAnalyzing) {
+        NoticeScanningScreen(
+            status = DocumentAnalysisSession.analysisStatus,
+            progress = DocumentAnalysisSession.analysisProgress,
+            documentName = ActiveDocumentSession.documentName.ifBlank { "Notice Document" },
+            onBackClicked = onBackClicked
+        )
+        return
+    }
+
+    val analysis = activeResult
 
     var showRawOcrText by remember { mutableStateOf(false) }
     var explanationLang by remember {
@@ -1567,11 +1860,11 @@ fun NoticeDetailsScreen(
             lq.contains("deadline") || lq.contains("due") || lq.contains("when") || lq.contains("date") || lq.contains("à®•à®Ÿà¯ˆà®šà®¿") ->
                 "The primary cut-off deadline for this notice is ${analysis.primaryDeadline} (${analysis.daysRemaining}). Please complete submissions before this date."
             lq.contains("task") || lq.contains("do") || lq.contains("action") || lq.contains("checklist") || lq.contains("à®Žà®©à¯à®©") ->
-                "The required tasks identified from the notice are: ${analysis.actions.joinToString("; ") { it.title }}."
+                "The required tasks identified from this notice are: ${analysis.actions.joinToString("; ") { it.title }}."
             lq.contains("authority") || lq.contains("who") || lq.contains("issued") || lq.contains("office") ->
                 "This notice was issued by ${analysis.issuingAuthority} under official reference code ${analysis.referenceNumber}."
             lq.contains("fee") || lq.contains("pay") || lq.contains("amount") || lq.contains("penalty") || lq.contains("à®•à®Ÿà¯à®Ÿà®£à®®à¯") ->
-                if (analysis.category.contains("Fee")) "Online fee payments must be settled through the university portal using NetBanking or UPI before ${analysis.primaryDeadline} to avoid late fines."
+                if (analysis.category.contains("Fee")) "Online fee payments must be settled through the university/official portal before ${analysis.primaryDeadline} to avoid late fines."
                 else "This notice does not require fee payment. It is an official announcement from ${analysis.issuingAuthority}."
             else ->
                 "Based on the extracted notice text: ${analysis.keySummary} Relevant contact authority: ${analysis.issuingAuthority}."
@@ -2027,7 +2320,7 @@ fun NoticeDetailsScreen(
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
                                             modifier = Modifier.padding(start = 36.dp),
-                                            color = Color(0xFFFEF9C3), // Soft yellow highlighter
+                                            color = Color(0xFFFEF9C3),
                                             shape = RoundedCornerShape(8.dp),
                                             border = BorderStroke(1.dp, Color(0xFFFDE047))
                                         ) {

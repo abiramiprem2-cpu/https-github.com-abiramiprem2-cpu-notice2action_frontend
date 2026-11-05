@@ -1,4 +1,4 @@
-﻿package com.simats.notice2action
+package com.simats.notice2action
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -347,7 +347,7 @@ fun DashboardScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "Innovation Week 2026",
+                                        text = DocumentAnalysisSession.activeResult?.documentTitle ?: "Official Notice Document",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)

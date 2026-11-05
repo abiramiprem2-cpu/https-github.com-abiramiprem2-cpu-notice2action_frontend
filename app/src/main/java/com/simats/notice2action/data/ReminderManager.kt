@@ -24,7 +24,7 @@ object ReminderManager {
             deadline = "20 Oct • 5:00 PM",
             initialEnabled = true,
             isPast = false,
-            sourceDocument = "Innovation Week 2026",
+            sourceDocument = "Academic Affairs Notice",
             timingPreset = "1 day before (9:00 AM)"
         ),
         ReminderItemModel(
@@ -34,7 +34,7 @@ object ReminderManager {
             deadline = "22 Oct • 10:00 AM",
             initialEnabled = true,
             isPast = false,
-            sourceDocument = "Innovation Week 2026",
+            sourceDocument = "Academic Affairs Notice",
             timingPreset = "1 hour before"
         ),
         ReminderItemModel(
@@ -54,7 +54,7 @@ object ReminderManager {
             deadline = "12 Oct • 11:30 AM",
             initialEnabled = true,
             isPast = true,
-            sourceDocument = "Innovation Week 2026",
+            sourceDocument = "Academic Affairs Notice",
             timingPreset = "At event"
         )
     )
