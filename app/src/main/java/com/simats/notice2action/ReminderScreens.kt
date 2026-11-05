@@ -1,4 +1,4 @@
-package com.simats.notice2action
+﻿package com.simats.notice2action
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -29,14 +29,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-data class ReminderItemModel(
-    val id: String,
-    val title: String,
-    val scheduledTime: String,
-    val deadline: String,
-    val initialEnabled: Boolean,
-    val isPast: Boolean = false
-)
+import androidx.compose.material.icons.filled.Add
+import com.simats.notice2action.data.ReminderManager
+import com.simats.notice2action.data.ReminderItemModel
 
 @Composable
 fun RemindersScreen(
@@ -46,17 +41,8 @@ fun RemindersScreen(
     onTasksClicked: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf("Upcoming") }
-    var remindersList by remember {
-        mutableStateOf(
-            listOf(
-                ReminderItemModel("1", "Submit project proposal", "19 Oct 2026 • 9:00 AM", "20 Oct • 5:00 PM", true, false),
-                ReminderItemModel("2", "Attend team briefing", "22 Oct 2026 • 9:00 AM", "22 Oct • 10:00 AM", true, false),
-                ReminderItemModel("3", "Submit expense report", "22 Oct 2026 • 9:00 AM", "23 Oct • 6:00 PM", false, false),
-                ReminderItemModel("4", "Innovation Week Orientation", "12 Oct 2026 • 10:00 AM", "12 Oct • 11:30 AM", true, true)
-            )
-        )
-    }
     var reminderToDelete by remember { mutableStateOf<ReminderItemModel?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -76,7 +62,7 @@ fun RemindersScreen(
             ) {
                 // Header
                 Text(
-                    text = "E • DEADLINES & NOTIFICATIONS",
+                    text = "E â€¢ DEADLINES & NOTIFICATIONS",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF64748B),
@@ -93,12 +79,29 @@ fun RemindersScreen(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
                     )
-                    Text(
-                        text = "⚲",
-                        fontSize = 20.sp,
-                        color = Color(0xFF2563EB),
-                        modifier = Modifier.clickable { onSettingsClicked() }
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = Color(0xFF2563EB),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.clickable { showAddDialog = true }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Add", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "âš²",
+                            fontSize = 20.sp,
+                            color = Color(0xFF2563EB),
+                            modifier = Modifier.clickable { onSettingsClicked() }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -167,7 +170,7 @@ fun RemindersScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "3 scheduled • 2 enabled",
+                        text = "${ReminderManager.getScheduledCount()} scheduled â€¢ ${ReminderManager.getActiveCount()} active",
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )
@@ -188,11 +191,11 @@ fun RemindersScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Cards list filtered by selectedTab
+                // Cards list from ReminderManager
                 val displayedReminders = if (selectedTab == "Upcoming") {
-                    remindersList.filter { !it.isPast }
+                    ReminderManager.getUpcomingReminders()
                 } else {
-                    remindersList.filter { it.isPast }
+                    ReminderManager.getPastReminders()
                 }
 
                 if (displayedReminders.isEmpty()) {
@@ -211,10 +214,8 @@ fun RemindersScreen(
                 } else {
                     displayedReminders.forEach { item ->
                         ReminderCard(
-                            title = item.title,
-                            scheduledTime = item.scheduledTime,
-                            deadline = item.deadline,
-                            initialEnabled = item.initialEnabled,
+                            item = item,
+                            onToggle = { ReminderManager.toggleReminder(item.id) },
                             onEdit = { onSettingsClicked() },
                             onDelete = { reminderToDelete = item }
                         )
@@ -234,7 +235,7 @@ fun RemindersScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "⚲", fontSize = 16.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                        Text(text = "âš²", fontSize = 16.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Reminder Settings",
@@ -248,7 +249,7 @@ fun RemindersScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Push delivery is not connected in this static demo. Past reminders remain available in the Past tab.",
+                    text = "Smart reminders are automatically linked with your scanned notices and deadlines.",
                     fontSize = 11.sp,
                     color = Color(0xFF94A3B8),
                     textAlign = TextAlign.Center,
@@ -291,7 +292,7 @@ fun RemindersScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        remindersList = remindersList.filter { it.id != reminderToDelete?.id }
+                        reminderToDelete?.let { ReminderManager.removeReminder(it.id) }
                         reminderToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
@@ -309,24 +310,111 @@ fun RemindersScreen(
             shape = RoundedCornerShape(16.dp)
         )
     }
+
+    if (showAddDialog) {
+        var newTitle by remember { mutableStateOf("") }
+        var newDeadline by remember { mutableStateOf("25 Oct 2026 â€¢ 5:00 PM") }
+        var selectedPreset by remember { mutableStateOf("1 day before (9:00 AM)") }
+
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = {
+                Text(
+                    text = "Add Smart Deadline Reminder",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A)
+                )
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = newTitle,
+                        onValueChange = { newTitle = it },
+                        label = { Text("Task / Notice Title") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = newDeadline,
+                        onValueChange = { newDeadline = it },
+                        label = { Text("Deadline Date & Time") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Alert Preset",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF475569)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("1 day before (9:00 AM)", "2 hours before", "Day of deadline").forEach { preset ->
+                            val isSelected = selectedPreset == preset
+                            Surface(
+                                color = if (isSelected) Color(0xFF2563EB) else Color(0xFFF1F5F9),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.clickable { selectedPreset = preset }
+                            ) {
+                                Text(
+                                    text = if (preset.startsWith("1 day")) "1 day before" else if (preset.startsWith("2 hours")) "2 hrs before" else "On deadline",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.White else Color(0xFF475569),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newTitle.isNotBlank()) {
+                            ReminderManager.addCustomReminder(
+                                title = newTitle.trim(),
+                                deadline = newDeadline.trim(),
+                                scheduled = "$selectedPreset alert",
+                                source = "Custom Reminder",
+                                preset = selectedPreset
+                            )
+                        }
+                        showAddDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Save Reminder", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddDialog = false }) {
+                    Text(text = "Cancel", color = Color(0xFF64748B))
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
 }
 
 @Composable
 fun ReminderCard(
-    title: String,
-    scheduledTime: String,
-    deadline: String,
-    initialEnabled: Boolean,
+    item: ReminderItemModel,
+    onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
-    var enabled by remember { mutableStateOf(initialEnabled) }
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White,
         shape = RoundedCornerShape(16.dp),
-        shadowElevation = 2.dp
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -336,11 +424,21 @@ fun ReminderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🔔", fontSize = 18.sp, color = Color(0xFF2563EB))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(if (item.initialEnabled) Color(0xFFEEF2FF) else Color(0xFFF1F5F9), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "ðŸ””", fontSize = 16.sp)
+                    }
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = title,
+                        text = item.title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
@@ -348,8 +446,8 @@ fun ReminderCard(
                 }
 
                 Switch(
-                    checked = enabled,
-                    onCheckedChange = { enabled = it },
+                    checked = item.initialEnabled,
+                    onCheckedChange = { onToggle(it) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = Color(0xFF2563EB),
@@ -360,10 +458,44 @@ fun ReminderCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Timing preset badge & source document badge
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = Color(0xFFEEF2FF),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "ðŸ“„ ${item.sourceDocument}",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2563EB),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+
+                Surface(
+                    color = Color(0xFFFEF3C7),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "â° ${item.timingPreset}",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB45309),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = scheduledTime,
+                text = "Alert scheduled: ${item.scheduledTime}",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF334155)
@@ -372,7 +504,7 @@ fun ReminderCard(
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = "Task deadline: $deadline",
+                text = "Notice deadline: ${item.deadline}",
                 fontSize = 11.sp,
                 color = Color(0xFF64748B)
             )
@@ -388,36 +520,35 @@ fun ReminderCard(
                     Box(
                         modifier = Modifier
                             .background(
-                                color = if (enabled) Color(0xFFDCFCE7) else Color(0xFFF1F5F9),
+                                color = if (item.initialEnabled) Color(0xFFDCFCE7) else Color(0xFFF1F5F9),
                                 shape = RoundedCornerShape(6.dp)
                             )
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = if (enabled) "Enabled" else "Disabled",
+                            text = if (item.initialEnabled) "Active" else "Paused",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (enabled) Color(0xFF16A34A) else Color(0xFF64748B)
+                            color = if (item.initialEnabled) Color(0xFF16A34A) else Color(0xFF64748B)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Scheduled by you",
+                        text = if (item.sourceDocument != "Custom Reminder") "Synced from Notice" else "Custom reminder",
                         fontSize = 11.sp,
                         color = Color(0xFF94A3B8)
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "✏️", fontSize = 14.sp, color = Color(0xFF2563EB), modifier = Modifier.clickable { onEdit() })
+                    Text(text = "âœï¸", fontSize = 14.sp, color = Color(0xFF2563EB), modifier = Modifier.clickable { onEdit() })
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = "🗑️", fontSize = 14.sp, color = Color(0xFFEF4444), modifier = Modifier.clickable { onDelete() })
+                    Text(text = "ðŸ—‘ï¸", fontSize = 14.sp, color = Color(0xFFEF4444), modifier = Modifier.clickable { onDelete() })
                 }
             }
         }
     }
 }
-
 @Composable
 fun ReminderSettingsScreen(
     onBackClicked: () -> Unit

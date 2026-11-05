@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CropFree
@@ -88,6 +89,11 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.QuestionAnswer
+import com.simats.notice2action.data.ReminderManager
+import com.simats.notice2action.data.LanguageManager
 import com.simats.notice2action.data.AppStrings
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -1545,6 +1551,33 @@ fun NoticeDetailsScreen(
         ?: DocumentAnalysisSession.synthesizeAnalysis("", ActiveDocumentSession.documentName)
 
     var showRawOcrText by remember { mutableStateOf(false) }
+    var explanationLang by remember {
+        mutableStateOf(if (LanguageManager.currentLanguage == "ta") "ta" else "en")
+    }
+
+    // Interactive Q&A State
+    var userQuestion by remember { mutableStateOf("") }
+    var aiAnswer by remember { mutableStateOf<String?>(null) }
+    var isAnswering by remember { mutableStateOf(false) }
+
+    fun answerNoticeQuestion(q: String) {
+        val lq = q.lowercase()
+        isAnswering = true
+        aiAnswer = when {
+            lq.contains("deadline") || lq.contains("due") || lq.contains("when") || lq.contains("date") || lq.contains("à®•à®Ÿà¯ˆà®šà®¿") ->
+                "The primary cut-off deadline for this notice is ${analysis.primaryDeadline} (${analysis.daysRemaining}). Please complete submissions before this date."
+            lq.contains("task") || lq.contains("do") || lq.contains("action") || lq.contains("checklist") || lq.contains("à®Žà®©à¯à®©") ->
+                "The required tasks identified from the notice are: ${analysis.actions.joinToString("; ") { it.title }}."
+            lq.contains("authority") || lq.contains("who") || lq.contains("issued") || lq.contains("office") ->
+                "This notice was issued by ${analysis.issuingAuthority} under official reference code ${analysis.referenceNumber}."
+            lq.contains("fee") || lq.contains("pay") || lq.contains("amount") || lq.contains("penalty") || lq.contains("à®•à®Ÿà¯à®Ÿà®£à®®à¯") ->
+                if (analysis.category.contains("Fee")) "Online fee payments must be settled through the university portal using NetBanking or UPI before ${analysis.primaryDeadline} to avoid late fines."
+                else "This notice does not require fee payment. It is an official announcement from ${analysis.issuingAuthority}."
+            else ->
+                "Based on the extracted notice text: ${analysis.keySummary} Relevant contact authority: ${analysis.issuingAuthority}."
+        }
+        isAnswering = false
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -1685,7 +1718,7 @@ fun NoticeDetailsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // ==============================================================
-                // CARD 1: WHAT IS THE DOCUMENT ABOUT? (Simple Words Explanation)
+                // CARD 1: WHAT IS THE DOCUMENT ABOUT? (With Bilingual EN/TA Toggle)
                 // ==============================================================
                 Box(
                     modifier = Modifier
@@ -1701,7 +1734,7 @@ fun NoticeDetailsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Box(
                                     modifier = Modifier
                                         .size(34.dp)
@@ -1718,24 +1751,66 @@ fun NoticeDetailsScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = AppStrings.get("qa_what_about"),
+                                        text = if (explanationLang == "ta") "à®‡à®¨à¯à®¤ à®†à®µà®£à®®à¯ à®Žà®¤à¯ˆà®ªà¯ à®ªà®±à¯à®±à®¿à®¯à®¤à¯?" else AppStrings.get("qa_what_about"),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = AppStrings.get("qa_what_about_sub"),
+                                        text = if (explanationLang == "ta") "à®Žà®³à®¿à®¯ à®šà¯Šà®±à¯à®•à®³à®¿à®²à¯ AI à®µà®¿à®³à®•à¯à®•à®®à¯" else AppStrings.get("qa_what_about_sub"),
                                         fontSize = 11.sp,
                                         color = Color(0xFF2563EB),
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
+
+                            // Bilingual Language Switcher [ EN | à®¤à®®à®¿à®´à¯ ]
+                            Surface(
+                                color = Color(0xFFF1F5F9),
+                                shape = RoundedCornerShape(20.dp),
+                                border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                            ) {
+                                Row(modifier = Modifier.padding(2.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                if (explanationLang == "en") Color(0xFF2563EB) else Color.Transparent,
+                                                RoundedCornerShape(16.dp)
+                                            )
+                                            .clickable { explanationLang = "en" }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "EN",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (explanationLang == "en") Color.White else Color(0xFF64748B)
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                if (explanationLang == "ta") Color(0xFF2563EB) else Color.Transparent,
+                                                RoundedCornerShape(16.dp)
+                                            )
+                                            .clickable { explanationLang = "ta" }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "à®¤à®®à®¿à®´à¯",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (explanationLang == "ta") Color.White else Color(0xFF64748B)
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Plain language explanation
+                        // Dynamic Plain Language Explanation
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             color = Color(0xFFF8FAFC),
@@ -1743,7 +1818,11 @@ fun NoticeDetailsScreen(
                             border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                         ) {
                             Text(
-                                text = analysis.whatIsItAbout,
+                                text = if (explanationLang == "ta" && analysis.tamilExplanation.isNotBlank()) {
+                                    analysis.tamilExplanation
+                                } else {
+                                    analysis.whatIsItAbout
+                                },
                                 fontSize = 13.sp,
                                 color = Color(0xFF1E293B),
                                 lineHeight = 20.sp,
@@ -1796,7 +1875,7 @@ fun NoticeDetailsScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // ==============================================================
-                // CARD 2: WHAT DO I NEED TO DO? (Actionable Tasks)
+                // CARD 2: WHAT DO I NEED TO DO? (Checklist + Source Highlighting + Smart Reminder)
                 // ==============================================================
                 Box(
                     modifier = Modifier
@@ -1829,13 +1908,13 @@ fun NoticeDetailsScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = AppStrings.get("qa_what_to_do"),
+                                        text = if (explanationLang == "ta") "à®¨à®¾à®©à¯ à®Žà®©à¯à®© à®šà¯†à®¯à¯à®¯ à®µà¯‡à®£à¯à®Ÿà¯à®®à¯?" else AppStrings.get("qa_what_to_do"),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = AppStrings.get("qa_what_to_do_sub"),
+                                        text = if (explanationLang == "ta") "à®¤à¯‡à®µà¯ˆà®¯à®¾à®© à®ªà®£à®¿à®•à®³à¯ & à®šà®°à®¿à®ªà®¾à®°à¯à®ªà¯à®ªà¯à®ªà¯ à®ªà®Ÿà¯à®Ÿà®¿à®¯à®²à¯" else AppStrings.get("qa_what_to_do_sub"),
                                         fontSize = 11.sp,
                                         color = Color(0xFF059669),
                                         fontWeight = FontWeight.Medium
@@ -1861,39 +1940,48 @@ fun NoticeDetailsScreen(
 
                         // Action Tasks Checklist
                         analysis.actions.forEachIndexed { index, action ->
+                            val taskDisplayTitle = if (explanationLang == "ta" && index < analysis.tamilActions.size) {
+                                analysis.tamilActions[index]
+                            } else {
+                                action.title
+                            }
+
+                            var isChecked by remember(action.id) { mutableStateOf(action.isConfirmed) }
+                            var isReminderActive by remember(action.id) {
+                                mutableStateOf(ReminderManager.isReminderActive(action.title))
+                            }
+
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                color = Color(0xFFF8FAFC),
-                                shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                    .padding(vertical = 5.dp),
+                                color = if (isChecked) Color(0xFFF8FAFC) else Color.White,
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, if (isChecked) Color(0xFFE2E8F0) else Color(0xFFCBD5E1))
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(26.dp)
-                                                .background(Color(0xFF2563EB), CircleShape),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${index + 1}",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(10.dp))
+                                        // Interactive Checkbox
+                                        Checkbox(
+                                            checked = isChecked,
+                                            onCheckedChange = { checked ->
+                                                isChecked = checked
+                                                action.isConfirmed = checked
+                                            },
+                                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF2563EB))
+                                        )
+
+                                        Spacer(modifier = Modifier.width(6.dp))
+
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = action.title,
+                                                text = taskDisplayTitle,
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF0F172A)
+                                                color = if (isChecked) Color(0xFF0F172A) else Color(0xFF64748B)
                                             )
                                             Text(
                                                 text = action.dateTime,
@@ -1901,6 +1989,7 @@ fun NoticeDetailsScreen(
                                                 color = Color(0xFF64748B)
                                             )
                                         }
+
                                         Surface(
                                             color = when (action.priorityText.lowercase()) {
                                                 "high" -> Color(0xFFFEE2E2)
@@ -1923,28 +2012,90 @@ fun NoticeDetailsScreen(
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
 
                                     Text(
                                         text = action.description,
                                         fontSize = 12.sp,
                                         color = Color(0xFF475569),
-                                        lineHeight = 17.sp
+                                        lineHeight = 17.sp,
+                                        modifier = Modifier.padding(start = 36.dp)
                                     )
 
+                                    // Visual Source Highlighting Badge (Yellow Highlighter)
                                     if (action.quote.isNotBlank()) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
-                                            color = Color(0xFFEFF6FF),
-                                            shape = RoundedCornerShape(6.dp)
+                                            modifier = Modifier.padding(start = 36.dp),
+                                            color = Color(0xFFFEF9C3), // Soft yellow highlighter
+                                            shape = RoundedCornerShape(8.dp),
+                                            border = BorderStroke(1.dp, Color(0xFFFDE047))
                                         ) {
-                                            Text(
-                                                text = "Doc source: ${action.quote}",
-                                                fontSize = 10.sp,
-                                                color = Color(0xFF1D4ED8),
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                maxLines = 1
-                                            )
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.AutoAwesome,
+                                                    contentDescription = "Source",
+                                                    tint = Color(0xFF854D0E),
+                                                    modifier = Modifier.size(12.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "ðŸ“Œ Detected in Notice: ${action.quote}",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = Color(0xFF854D0E),
+                                                    maxLines = 2,
+                                                    lineHeight = 14.sp
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Smart Deadline Reminder Pill
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 36.dp)
+                                    ) {
+                                        Surface(
+                                            color = if (isReminderActive) Color(0xFFEFF6FF) else Color(0xFFF8FAFC),
+                                            shape = RoundedCornerShape(20.dp),
+                                            border = BorderStroke(1.dp, if (isReminderActive) Color(0xFF93C5FD) else Color(0xFFCBD5E1)),
+                                            modifier = Modifier.clickable {
+                                                if (isReminderActive) {
+                                                    val existing = ReminderManager.reminders.find { it.title.equals(action.title, true) }
+                                                    if (existing != null) ReminderManager.toggleReminder(existing.id)
+                                                    isReminderActive = false
+                                                    Toast.makeText(context, "Reminder paused for this task", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    ReminderManager.addFromActionTask(action, analysis.documentTitle, "1 day before (9:00 AM)")
+                                                    isReminderActive = true
+                                                    Toast.makeText(context, "â° Smart Reminder set: 1 day before (${action.dateTime})", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (isReminderActive) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
+                                                    contentDescription = null,
+                                                    tint = if (isReminderActive) Color(0xFF2563EB) else Color(0xFF64748B),
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(5.dp))
+                                                Text(
+                                                    text = if (isReminderActive) "Smart Reminder Active (1 day before)" else "Set Smart Reminder (1 day before)",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = if (isReminderActive) Color(0xFF2563EB) else Color(0xFF64748B)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -1989,13 +2140,13 @@ fun NoticeDetailsScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = AppStrings.get("qa_by_when"),
+                                        text = if (explanationLang == "ta") "à®¨à®¾à®©à¯ à®Žà®ªà¯à®ªà¯‹à®¤à¯ à®µà®°à¯ˆ à®šà¯†à®¯à¯à®¯ à®µà¯‡à®£à¯à®Ÿà¯à®®à¯?" else AppStrings.get("qa_by_when"),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = AppStrings.get("qa_by_when_sub"),
+                                        text = if (explanationLang == "ta") "à®®à¯à®•à¯à®•à®¿à®¯ à®•à®¾à®²à®•à¯à®•à¯†à®Ÿà¯ à®®à®±à¯à®±à¯à®®à¯ à®¤à¯‡à®¤à®¿à®•à®³à¯" else AppStrings.get("qa_by_when_sub"),
                                         fontSize = 11.sp,
                                         color = Color(0xFFD97706),
                                         fontWeight = FontWeight.Medium
@@ -2104,7 +2255,142 @@ fun NoticeDetailsScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // ==============================================================
-                // CARD 4: EXTRACTED OCR TEXT (On-Device ML Kit)
+                // CARD 4: ASK QUESTIONS ABOUT THIS DOCUMENT (Interactive AI Q&A)
+                // ==============================================================
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(Color(0xFFF3E8FF), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QuestionAnswer,
+                                    contentDescription = "Q&A",
+                                    tint = Color(0xFF9333EA),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Ask About This Document",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Text(
+                                    text = "Instant answers synthesized from notice text",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF9333EA),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Quick suggestion question chips
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            listOf("Deadline?", "Required tasks?", "Who issued it?").forEach { chip ->
+                                Surface(
+                                    color = Color(0xFFFAF5FF),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFE9D5FF)),
+                                    modifier = Modifier.clickable {
+                                        userQuestion = chip
+                                        answerNoticeQuestion(chip)
+                                    }
+                                ) {
+                                    Text(
+                                        text = chip,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF7E22CE),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Question Input Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = userQuestion,
+                                onValueChange = { userQuestion = it },
+                                placeholder = { Text("Ask a question about this notice...", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            IconButton(
+                                onClick = {
+                                    if (userQuestion.isNotBlank()) {
+                                        answerNoticeQuestion(userQuestion)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .background(Color(0xFF9333EA), RoundedCornerShape(12.dp))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = "Ask",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        // AI Answer Bubble
+                        if (aiAnswer != null) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = Color(0xFFFAF5FF),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, Color(0xFFE9D5FF))
+                            ) {
+                                Row(modifier = Modifier.padding(12.dp)) {
+                                    Text(text = "ðŸ’¡", fontSize = 15.sp)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = aiAnswer!!,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF581C87),
+                                        lineHeight = 18.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // ==============================================================
+                // CARD 5: EXTRACTED OCR TEXT (On-Device ML Kit)
                 // ==============================================================
                 Box(
                     modifier = Modifier
@@ -2228,7 +2514,6 @@ fun NoticeDetailsScreen(
         }
     }
 }
-
 @Composable
 fun MyDocumentsScreen(
     onBackClicked: () -> Unit,

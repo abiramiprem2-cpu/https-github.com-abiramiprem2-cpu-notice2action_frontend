@@ -46,7 +46,10 @@ data class NoticeAnalysisResult(
     val actions: List<ActionTask>,
     val whatIsItAbout: String = simpleExplanation,
     val whatDoINeedToDo: List<String> = actions.map { it.title },
-    val byWhenShouldIDoIt: String = primaryDeadline
+    val byWhenShouldIDoIt: String = primaryDeadline,
+    val tamilExplanation: String = "",
+    val tamilActions: List<String> = emptyList(),
+    val sourceSnippets: List<String> = emptyList()
 )
 
 object DocumentAnalysisSession {
@@ -213,9 +216,12 @@ object DocumentAnalysisSession {
         val docCategory: String
         val docTitle: String
         val whatIsItAbout: String
+        val tamilExplanation: String
         val authority: String
         val refNo: String
         val actions = mutableListOf<ActionTask>()
+        val tamilActions = mutableListOf<String>()
+        val sourceSnippets = mutableListOf<String>()
 
         // Find candidate title from first meaningful lines
         val candidateTitle = rawLines.firstOrNull { line ->
@@ -231,6 +237,14 @@ object DocumentAnalysisSession {
 
             whatIsItAbout = "This document is an official payment notice issued by $authority. It states the outstanding fees and payment instructions. You are required to settle all college dues before the deadline to prevent late fee penalties and avoid holds on semester registrations."
 
+            tamilExplanation = "இந்த ஆவணம் $authority வெளியிட்ட அதிகாரப்பூர்வ கட்டண அறிவிப்பாகும். இது கல்லூரிக்கு செலுத்த வேண்டிய நிலுவைக் கட்டணங்கள் மற்றும் வழிமுறைகளைக் குறிப்பிடுகிறது. கூடுதல் அபராதக் கட்டணங்களைத் தவிர்க்கவும், செமஸ்டர் பதிவை உறுதிப்படுத்தவும் $detectedDate-க்குள் அனைத்து கட்டணங்களையும் செலுத்துமாறு கேட்டுக்கொள்ளப்படுகிறீர்கள்."
+
+            val quote1 = if (hasText) ocrText.take(65) else "\"Pay dues before $detectedDate to avoid late fee penalty...\""
+            val quote2 = "\"Students must retain payment acknowledgment receipt...\""
+
+            sourceSnippets.add(quote1)
+            sourceSnippets.add(quote2)
+
             actions.add(
                 ActionTask(
                     title = "Pay outstanding semester dues",
@@ -241,10 +255,12 @@ object DocumentAnalysisSession {
                     daysLeft = "5 days left",
                     priorityText = "High",
                     statusText = "Verified deadline",
-                    quote = if (hasText) ocrText.take(65) else "\"Pay dues before $detectedDate to avoid late fee penalty...\"",
+                    quote = quote1,
                     category = "Finance"
                 )
             )
+            tamilActions.add("நிலுவையில் உள்ள செமஸ்டர் கட்டணத்தை ஆன்லைனில் செலுத்துங்கள்")
+
             actions.add(
                 ActionTask(
                     title = "Download and verify fee receipt",
@@ -255,10 +271,12 @@ object DocumentAnalysisSession {
                     daysLeft = "6 days left",
                     priorityText = "Medium",
                     statusText = "Suggested step",
-                    quote = "\"Students must retain payment acknowledgment...\"",
+                    quote = quote2,
                     category = "Finance"
                 )
             )
+            tamilActions.add("கட்டண ரசீதை பதிவிறக்கம் செய்து துறை ஒருங்கிணைப்பாளரிடம் சமர்ப்பிக்கவும்")
+
         } else if (isExam) {
             docCategory = "Examination Schedule"
             docTitle = candidateTitle ?: if (hasText && rawLines.isNotEmpty()) rawLines.first().take(45) else "Semester Exam Registration & Timetable"
@@ -266,6 +284,14 @@ object DocumentAnalysisSession {
             refNo = detectedRef ?: "COE/N2A/2026/EXAM-112"
 
             whatIsItAbout = "This notice is an official examination circular issued by $authority. It outlines the upcoming examination rules, subject timetables, hall ticket generation schedule, and attendance requirements. You need to review registered courses and report on time."
+
+            tamilExplanation = "இந்த அறிவிப்பு $authority வெளியிட்ட தேர்வு சுற்றறிக்கையாகும். இது வரவிருக்கும் செமஸ்டர் தேர்வுகள், பாட அட்டவணை, ஹால் டிக்கெட் பதிவிறக்கத் தேதி மற்றும் தேர்வு விதிமுறைகளை விளக்குகிறது. உங்கள் பாடங்களை சரிபார்த்து உரிய நேரத்தில் தேர்வு மையத்தில் அறிக்கை அளிக்க வேண்டும்."
+
+            val quote1 = if (hasText) ocrText.take(65) else "\"Hall tickets accessible after $detectedDate...\""
+            val quote2 = "\"Reporting time 30 mins prior to commencement...\""
+
+            sourceSnippets.add(quote1)
+            sourceSnippets.add(quote2)
 
             actions.add(
                 ActionTask(
@@ -277,10 +303,12 @@ object DocumentAnalysisSession {
                     daysLeft = "3 days left",
                     priorityText = "High",
                     statusText = "Verified deadline",
-                    quote = if (hasText) ocrText.take(65) else "\"Hall tickets accessible after $detectedDate...\"",
+                    quote = quote1,
                     category = "Academic"
                 )
             )
+            tamilActions.add("தேர்வுத்தாள்களை சரிபார்த்து ஹால் டிக்கெட்டை போர்ட்டலில் பதிவிறக்கவும்")
+
             actions.add(
                 ActionTask(
                     title = "Check seating allocation and reporting timing",
@@ -291,10 +319,12 @@ object DocumentAnalysisSession {
                     daysLeft = "5 days left",
                     priorityText = "Medium",
                     statusText = "Verified date",
-                    quote = "\"Reporting time 30 mins prior to commencement...\"",
+                    quote = quote2,
                     category = "Academic"
                 )
             )
+            tamilActions.add("தேர்வு அறை எண் மற்றும் இருக்கை ஒதுக்கீட்டை சரிபார்க்கவும்")
+
         } else if (isAdmission) {
             docCategory = "Admission & Enrollment"
             docTitle = candidateTitle ?: if (hasText && rawLines.isNotEmpty()) rawLines.first().take(45) else "Admissions & Counseling Notification"
@@ -302,6 +332,14 @@ object DocumentAnalysisSession {
             refNo = detectedRef ?: "ADM/N2A/2026/089"
 
             whatIsItAbout = "This document is an official admission directive from $authority. It specifies verification guidelines, certificate requirements, and enrollment cut-off dates for admitted candidates. You must submit all verified documents before the date."
+
+            tamilExplanation = "இந்த ஆவணம் $authority வெளியிட்ட சேர்க்கை மற்றும் கலந்தாய்வு வழிகாட்டுதலாகும். மாணவர்கள் அசல் சான்றிதழ்கள், மாற்றுச் சான்றிதழ் மற்றும் அடையாளச் சான்றுகளை சரிபார்த்து கடைசி தேதிக்குள் பதிவேற்ற வேண்டும்."
+
+            val quote1 = if (hasText) ocrText.take(65) else "\"Submit certificates by $detectedDate...\""
+            val quote2 = "\"Original document verification mandatory...\""
+
+            sourceSnippets.add(quote1)
+            sourceSnippets.add(quote2)
 
             actions.add(
                 ActionTask(
@@ -313,10 +351,12 @@ object DocumentAnalysisSession {
                     daysLeft = "4 days left",
                     priorityText = "High",
                     statusText = "Verified deadline",
-                    quote = if (hasText) ocrText.take(65) else "\"Submit certificates by $detectedDate...\"",
+                    quote = quote1,
                     category = "Admission"
                 )
             )
+            tamilActions.add("அசல் சான்றிதழ்கள் மற்றும் மதிப்பெண் பட்டியலை பதிவேற்றவும்")
+
             actions.add(
                 ActionTask(
                     title = "Complete document verification at admissions desk",
@@ -327,10 +367,12 @@ object DocumentAnalysisSession {
                     daysLeft = "6 days left",
                     priorityText = "Medium",
                     statusText = "Required step",
-                    quote = "\"Original document verification mandatory...\"",
+                    quote = quote2,
                     category = "Admission"
                 )
             )
+            tamilActions.add("சேர்க்கை மேசையில் நேரடி சான்றிதழ் சரிபார்ப்பை முடிக்கவும்")
+
         } else {
             docCategory = "Academic Directive"
             docTitle = candidateTitle ?: if (hasText && rawLines.isNotEmpty()) {
@@ -343,6 +385,16 @@ object DocumentAnalysisSession {
 
             whatIsItAbout = "This announcement from $authority is a call for proposals and team participation in $docTitle. It requires candidates to submit their abstracts, attend mandatory briefing sessions, and prepare demonstration prototypes according to evaluation guidelines."
 
+            tamilExplanation = "இந்த அறிவிப்பு $authority வெளியிட்ட திட்டப் பங்கேற்பு மற்றும் புதுமை வார அழைப்பாகும். மாணவர்கள் தங்கள் திட்டச் சுருக்கத்தை போர்ட்டலில் சமர்ப்பித்து, வழிகாட்டல் கூட்டத்தில் பங்கேற்று, இறுதி மதிப்பீட்டிற்கான முன்மாதிரியைத் தயார் செய்ய வேண்டும்."
+
+            val quote1 = if (hasText) ocrText.take(65) else "\"Submit your project proposal by 20 October 2026...\" • p.1"
+            val quote2 = "\"Attend the briefing on 22 October, 10:00 AM...\" • p.1"
+            val quote3 = "\"Final presentations commence late October...\""
+
+            sourceSnippets.add(quote1)
+            sourceSnippets.add(quote2)
+            sourceSnippets.add(quote3)
+
             actions.add(
                 ActionTask(
                     title = "Submit project proposal and abstract",
@@ -353,10 +405,12 @@ object DocumentAnalysisSession {
                     daysLeft = "5 days left",
                     priorityText = "High",
                     statusText = "Verified date",
-                    quote = if (hasText) ocrText.take(65) else "\"Submit your project proposal by 20 October 2026...\" • p.1",
+                    quote = quote1,
                     category = "Academic"
                 )
             )
+            tamilActions.add("திட்ட முன்மொழிவு மற்றும் சுருக்கத்தை ஆன்லைனில் சமர்ப்பிக்கவும்")
+
             actions.add(
                 ActionTask(
                     title = "Attend team briefing session",
@@ -367,10 +421,12 @@ object DocumentAnalysisSession {
                     daysLeft = "7 days left",
                     priorityText = "Medium",
                     statusText = "Verified date",
-                    quote = "\"Attend the briefing on 22 October, 10:00 AM...\" • p.1",
+                    quote = quote2,
                     category = "Academic"
                 )
             )
+            tamilActions.add("ஆசிரியர் வழிகாட்டல் கூட்டத்தில் கலந்துகொள்ளவும்")
+
             actions.add(
                 ActionTask(
                     title = "Prepare final presentation slide deck",
@@ -381,10 +437,11 @@ object DocumentAnalysisSession {
                     daysLeft = "13 days left",
                     priorityText = "Low",
                     statusText = "Estimated date",
-                    quote = "\"Final presentations commence late October...\"",
+                    quote = quote3,
                     category = "Presentation"
                 )
             )
+            tamilActions.add("இறுதி விளக்கக்காட்சி ஸ்லைடுகள் மற்றும் முன்மாதிரியைத் தயார் செய்யவும்")
         }
 
         // What do I need to do: list of task titles
@@ -428,7 +485,10 @@ Authorized by: $authority
             actions = actions,
             whatIsItAbout = whatIsItAbout,
             whatDoINeedToDo = whatDoINeedToDoList,
-            byWhenShouldIDoIt = byWhenShouldIDoItText
+            byWhenShouldIDoIt = byWhenShouldIDoItText,
+            tamilExplanation = tamilExplanation,
+            tamilActions = tamilActions,
+            sourceSnippets = sourceSnippets
         )
     }
 }

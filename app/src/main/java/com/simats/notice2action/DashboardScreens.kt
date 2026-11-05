@@ -1,4 +1,4 @@
-package com.simats.notice2action
+﻿package com.simats.notice2action
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +14,8 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Help
 import com.simats.notice2action.data.AppStrings
+import com.simats.notice2action.data.DocumentAnalysisSession
+import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.SessionManager
 import androidx.compose.ui.platform.LocalContext

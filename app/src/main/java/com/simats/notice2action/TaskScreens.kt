@@ -1,4 +1,4 @@
-package com.simats.notice2action
+﻿package com.simats.notice2action
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.ActionTask
+import com.simats.notice2action.data.ReminderManager
 
 @Composable
 fun ReviewSuggestedActionsScreen(
