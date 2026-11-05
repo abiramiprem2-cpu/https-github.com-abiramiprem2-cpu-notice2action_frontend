@@ -91,7 +91,20 @@ object AppStrings {
         "review_actions_title" to "Review Suggested Actions",
         "upcoming_actions_screen_title" to "Upcoming Actions",
         "action_continue" to "Continue",
-        "action_back" to "Back"
+        "action_back" to "Back",
+
+        // Notice Analysis Q&A
+        "qa_what_about" to "What is this document about?",
+        "qa_what_about_sub" to "AI Analysis in Simple Words",
+        "qa_what_to_do" to "What do I need to do?",
+        "qa_what_to_do_sub" to "Required Tasks & Action Items",
+        "qa_by_when" to "By when should I do it?",
+        "qa_by_when_sub" to "Important Deadlines & Timeline",
+        "qa_extracted_ocr" to "Extracted Document Text (OCR)",
+        "qa_copy_text" to "Copy Text",
+        "qa_review_actions" to "Review & Confirm Actions",
+        "qa_tasks_identified" to "Tasks Identified",
+        "qa_primary_deadline" to "Primary Due Date"
     )
 
     // Tamil (தமிழ்)
@@ -184,7 +197,20 @@ object AppStrings {
         "review_actions_title" to "பரிந்துரைக்கப்பட்ட செயல்கள்",
         "upcoming_actions_screen_title" to "வரவிருக்கும் செயல்கள்",
         "action_continue" to "தொடரவும்",
-        "action_back" to "பின்செல்"
+        "action_back" to "பின்செல்",
+
+        // Notice Analysis Q&A
+        "qa_what_about" to "இந்த ஆவணம் எதைப் பற்றியது?",
+        "qa_what_about_sub" to "எளிய சொற்களில் AI விளக்கம்",
+        "qa_what_to_do" to "நான் என்ன செய்ய வேண்டும்?",
+        "qa_what_to_do_sub" to "தேவையான பணிகள் மற்றும் நடவடிக்கைகள்",
+        "qa_by_when" to "நான் எப்போது வரை செய்ய வேண்டும்?",
+        "qa_by_when_sub" to "முக்கிய காலக்கெடு மற்றும் தேதிகள்",
+        "qa_extracted_ocr" to "ஆவண உரை (OCR)",
+        "qa_copy_text" to "உரையை நகலெடு",
+        "qa_review_actions" to "செயல்களை மதிப்பாய்வு செய்க",
+        "qa_tasks_identified" to "பணிகள் கண்டறியப்பட்டன",
+        "qa_primary_deadline" to "முக்கிய கடைசி தேதி"
     )
 
     // Malayalam (മലയാളം)
@@ -277,7 +303,20 @@ object AppStrings {
         "review_actions_title" to "നിർദ്ദേശിച്ച പ്രവർത്തനങ്ങൾ",
         "upcoming_actions_screen_title" to "വരാനിരിക്കുന്ന പ്രവർത്തനങ്ങൾ",
         "action_continue" to "തുടരുക",
-        "action_back" to "തിരികെ"
+        "action_back" to "തിരികെ",
+
+        // Notice Analysis Q&A
+        "qa_what_about" to "ഈ രേഖ എന്തിനെക്കുറിച്ചാണ്?",
+        "qa_what_about_sub" to "ലളിതമായ വാക്കുകളിൽ AI വിശകലനം",
+        "qa_what_to_do" to "ഞാൻ എന്താണ് ചെയ്യേണ്ടത്?",
+        "qa_what_to_do_sub" to "ആവശ്യമായ ജോലികളും നടപടികളും",
+        "qa_by_when" to "ഇത് എപ്പോഴേക്ക് ചെയ്യണം?",
+        "qa_by_when_sub" to "പ്രധാന സമയപരിധികളും തീയതികളും",
+        "qa_extracted_ocr" to "രേഖയിലെ വാചകം (OCR)",
+        "qa_copy_text" to "വാചകം പകർത്തുക",
+        "qa_review_actions" to "നടപടികൾ അവലോകനം ചെയ്യുക",
+        "qa_tasks_identified" to "ജോലികൾ കണ്ടെത്തി",
+        "qa_primary_deadline" to "പ്രധാന അവസാന തീയതി"
     )
 
     // Telugu (తెలుగు)
@@ -370,7 +409,20 @@ object AppStrings {
         "review_actions_title" to "సూచించిన చర్యలు",
         "upcoming_actions_screen_title" to "రాబోయే చర్యలు",
         "action_continue" to "కొనసాగించండి",
-        "action_back" to "వెనుకకు"
+        "action_back" to "వెనుకకు",
+
+        // Notice Analysis Q&A
+        "qa_what_about" to "ఈ పత్రం దేని గురించి?",
+        "qa_what_about_sub" to "సరళమైన పదాలలో AI విశ్లేషణ",
+        "qa_what_to_do" to "నేను ఏమి చేయాలి?",
+        "qa_what_to_do_sub" to "అవసరమైన పనులు మరియు చర్యలు",
+        "qa_by_when" to "నేను ఎప్పటిలోగా చేయాలి?",
+        "qa_by_when_sub" to "ముఖ్యమైన గడువులు మరియు తేదీలు",
+        "qa_extracted_ocr" to "పత్రం వచనం (OCR)",
+        "qa_copy_text" to "వచనాన్ని కాపీ చేయండి",
+        "qa_review_actions" to "చర్యలను సమీక్షించండి",
+        "qa_tasks_identified" to "పనులు గుర్తించబడ్డాయి",
+        "qa_primary_deadline" to "ప్రధాన గడువు తేదీ"
     )
 
     // Hindi (हिन्दी)
@@ -463,7 +515,20 @@ object AppStrings {
         "review_actions_title" to "सुझाए गए कार्य",
         "upcoming_actions_screen_title" to "आगामी कार्य",
         "action_continue" to "जारी रखें",
-        "action_back" to "पीछे"
+        "action_back" to "पीछे",
+
+        // Notice Analysis Q&A
+        "qa_what_about" to "यह दस्तावेज़ किस बारे में है?",
+        "qa_what_about_sub" to "सरल शब्दों में AI विश्लेषण",
+        "qa_what_to_do" to "मुझे क्या करना होगा?",
+        "qa_what_to_do_sub" to "आवश्यक कार्य और कदम",
+        "qa_by_when" to "मुझे इसे कब तक करना होगा?",
+        "qa_by_when_sub" to "महत्वपूर्ण समय सीमा और तारीखें",
+        "qa_extracted_ocr" to "निकाला गया पाठ (OCR)",
+        "qa_copy_text" to "पाठ कॉपी करें",
+        "qa_review_actions" to "कार्यों की समीक्षा करें",
+        "qa_tasks_identified" to "कार्य पहचाने गए",
+        "qa_primary_deadline" to "मुख्य अंतिम तिथि"
     )
 
     // Kannada (ಕನ್ನಡ)
@@ -556,7 +621,20 @@ object AppStrings {
         "review_actions_title" to "ಸೂಚಿಸಲಾದ ಕ್ರಮಗಳು",
         "upcoming_actions_screen_title" to "ಮುಂಬರುವ ಕ್ರಮಗಳು",
         "action_continue" to "ಮುಂದುವರಿಸಿ",
-        "action_back" to "ಹಿಂದೆ"
+        "action_back" to "ಹಿಂದೆ",
+
+        // Notice Analysis Q&A
+        "qa_what_about" to "ಈ ದಾಖಲೆಯು ಯಾವುದರ ಬಗ್ಗೆ?",
+        "qa_what_about_sub" to "ಸರಳ ಪದಗಳಲ್ಲಿ AI ವಿಶ್ಲೇಷಣೆ",
+        "qa_what_to_do" to "ನಾನು ಏನು ಮಾಡಬೇಕು?",
+        "qa_what_to_do_sub" to "ಅಗತ್ಯವಿರುವ ಕಾರ್ಯಗಳು ಮತ್ತು ಕ್ರಮಗಳು",
+        "qa_by_when" to "ನಾನು ಇದನ್ನು ಯಾವಾಗ ಮಾಡಬೇಕು?",
+        "qa_by_when_sub" to "ಪ್ರಮುಖ ಗಡುವು ಮತ್ತು ದಿನಾಂಕಗಳು",
+        "qa_extracted_ocr" to "ದಾಖಲೆ ಪಠ್ಯ (OCR)",
+        "qa_copy_text" to "ಪಠ್ಯವನ್ನು ನಕಲಿಸಿ",
+        "qa_review_actions" to "ಕ್ರಮಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
+        "qa_tasks_identified" to "ಕಾರ್ಯಗಳು ಪತ್ತೆಯಾಗಿವೆ",
+        "qa_primary_deadline" to "ಮುಖ್ಯ ಅಂತಿಮ ದಿನಾಂಕ"
     )
 
     fun get(key: String): String {

@@ -1,4 +1,4 @@
-package com.simats.notice2action
+﻿package com.simats.notice2action
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.*
@@ -85,6 +87,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Schedule
+import com.simats.notice2action.data.AppStrings
 import android.content.ClipData
 import android.content.ClipboardManager
 
@@ -670,6 +674,8 @@ object ActiveDocumentSession {
         documentSizeText = sizeText
         isImage = image
         isReady = true
+        DocumentAnalysisSession.activeResult = null
+        DocumentAnalysisSession.isAnalyzing = false
     }
 
     fun clear() {
@@ -679,6 +685,8 @@ object ActiveDocumentSession {
         documentSizeText = "2.4 MB"
         isImage = false
         isReady = false
+        DocumentAnalysisSession.activeResult = null
+        DocumentAnalysisSession.isAnalyzing = false
     }
 }
 
@@ -1587,7 +1595,7 @@ fun NoticeDetailsScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Notice Details",
+                                text = AppStrings.get("notice_details_title"),
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF0F172A)
@@ -1609,7 +1617,7 @@ fun NoticeDetailsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Document Category Pill & Title
+                // Document Category Pill & Status
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1643,13 +1651,24 @@ fun NoticeDetailsScreen(
                         color = Color(0xFFDCFCE7),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(
-                            text = "OCR Verified",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF16A34A),
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF16A34A),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "OCR Verified",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF16A34A)
+                            )
+                        }
                     }
                 }
 
@@ -1657,7 +1676,7 @@ fun NoticeDetailsScreen(
 
                 Text(
                     text = analysis.documentTitle,
-                    fontSize = 24.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0F172A),
                     lineHeight = 28.sp
@@ -1665,81 +1684,9 @@ fun NoticeDetailsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Card 1: Simple Words Explanation
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = Color(0xFF2563EB),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "Meaning in Simple Words",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = analysis.simpleExplanation,
-                            fontSize = 13.sp,
-                            color = Color(0xFF334155),
-                            lineHeight = 19.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xFFF8FAFC),
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = Color(0xFF2563EB),
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = analysis.keySummary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF2563EB)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Card 2: Key Information & Deadline
+                // ==============================================================
+                // CARD 1: WHAT IS THE DOCUMENT ABOUT? (Simple Words Explanation)
+                // ==============================================================
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1751,87 +1698,94 @@ fun NoticeDetailsScreen(
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Key Timeline & Deadlines",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                            Surface(
-                                color = Color(0xFFFEE2E2),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text(
-                                    text = analysis.daysRemaining,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFDC2626),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                                        contentDescription = null,
+                                        tint = Color(0xFF2563EB),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = AppStrings.get("qa_what_about"),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A)
+                                    )
+                                    Text(
+                                        text = AppStrings.get("qa_what_about_sub"),
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF2563EB),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarToday,
-                                    contentDescription = null,
-                                    tint = Color(0xFFD97706),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Primary Due Date",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                                Text(
-                                    text = analysis.primaryDeadline,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A)
-                                )
-                            }
+                        // Plain language explanation
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFF8FAFC),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Text(
+                                text = analysis.whatIsItAbout,
+                                fontSize = 13.sp,
+                                color = Color(0xFF1E293B),
+                                lineHeight = 20.sp,
+                                modifier = Modifier.padding(12.dp)
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
+                        // Authority & Reference Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = "Authority", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                                Text(
+                                    text = "ISSUING AUTHORITY",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF94A3B8),
+                                    letterSpacing = 0.5.sp
+                                )
                                 Text(
                                     text = analysis.issuingAuthority,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF334155),
                                     maxLines = 1
                                 )
                             }
                             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                                Text(text = "Reference ID", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                                Text(
+                                    text = "REFERENCE CODE",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF94A3B8),
+                                    letterSpacing = 0.5.sp
+                                )
                                 Text(
                                     text = analysis.referenceNumber,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF334155)
                                 )
                             }
@@ -1841,7 +1795,9 @@ fun NoticeDetailsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Card 3: What to Do Next / Identified Actions Preview
+                // ==============================================================
+                // CARD 2: WHAT DO I NEED TO DO? (Actionable Tasks)
+                // ==============================================================
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1856,82 +1812,142 @@ fun NoticeDetailsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "What to Do Next",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                            Text(
-                                text = "${analysis.actions.size} Tasks Identified",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2563EB)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        analysis.actions.forEachIndexed { index, action ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(24.dp)
-                                        .background(Color(0xFFEEF2FF), CircleShape),
+                                        .size(34.dp)
+                                        .background(Color(0xFFECFDF5), RoundedCornerShape(8.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = "${index + 1}",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF2563EB)
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Assignment,
+                                        contentDescription = null,
+                                        tint = Color(0xFF059669),
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column {
                                     Text(
-                                        text = action.title,
-                                        fontSize = 13.sp,
+                                        text = AppStrings.get("qa_what_to_do"),
+                                        fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = action.dateTime,
+                                        text = AppStrings.get("qa_what_to_do_sub"),
                                         fontSize = 11.sp,
-                                        color = Color(0xFF64748B)
-                                    )
-                                }
-                                Surface(
-                                    color = when (action.priorityText.lowercase()) {
-                                        "high" -> Color(0xFFFEE2E2)
-                                        "medium" -> Color(0xFFFEF3C7)
-                                        else -> Color(0xFFDCFCE7)
-                                    },
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = action.priorityText,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when (action.priorityText.lowercase()) {
-                                            "high" -> Color(0xFFDC2626)
-                                            "medium" -> Color(0xFFD97706)
-                                            else -> Color(0xFF16A34A)
-                                        },
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        color = Color(0xFF059669),
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
-                            if (index < analysis.actions.lastIndex) {
-                                HorizontalDivider(
-                                    color = Color(0xFFF1F5F9),
-                                    modifier = Modifier.padding(vertical = 6.dp)
+
+                            Surface(
+                                color = Color(0xFFEEF2FF),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = "${analysis.actions.size} ${AppStrings.get("qa_tasks_identified")}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2563EB),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Action Tasks Checklist
+                        analysis.actions.forEachIndexed { index, action ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                color = Color(0xFFF8FAFC),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(26.dp)
+                                                .background(Color(0xFF2563EB), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "${index + 1}",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = action.title,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF0F172A)
+                                            )
+                                            Text(
+                                                text = action.dateTime,
+                                                fontSize = 11.sp,
+                                                color = Color(0xFF64748B)
+                                            )
+                                        }
+                                        Surface(
+                                            color = when (action.priorityText.lowercase()) {
+                                                "high" -> Color(0xFFFEE2E2)
+                                                "medium" -> Color(0xFFFEF3C7)
+                                                else -> Color(0xFFDCFCE7)
+                                            },
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = action.priorityText,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = when (action.priorityText.lowercase()) {
+                                                    "high" -> Color(0xFFDC2626)
+                                                    "medium" -> Color(0xFFD97706)
+                                                    else -> Color(0xFF16A34A)
+                                                },
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = action.description,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF475569),
+                                        lineHeight = 17.sp
+                                    )
+
+                                    if (action.quote.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Surface(
+                                            color = Color(0xFFEFF6FF),
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = "Doc source: ${action.quote}",
+                                                fontSize = 10.sp,
+                                                color = Color(0xFF1D4ED8),
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1939,7 +1955,157 @@ fun NoticeDetailsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Card 4: Extracted OCR Raw Text (Expandable)
+                // ==============================================================
+                // CARD 3: BY WHEN SHOULD I DO IT? (Deadlines & Timeline)
+                // ==============================================================
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Schedule,
+                                        contentDescription = null,
+                                        tint = Color(0xFFD97706),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = AppStrings.get("qa_by_when"),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A)
+                                    )
+                                    Text(
+                                        text = AppStrings.get("qa_by_when_sub"),
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFD97706),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                color = Color(0xFFFEE2E2),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = analysis.daysRemaining,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFDC2626),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Highlight Banner for Primary Due Date
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFFFFBEB),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFFFDE68A))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(Color(0xFFF59E0B), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarToday,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = AppStrings.get("qa_primary_deadline"),
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF92400E),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = analysis.primaryDeadline,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF78350F)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Milestone Sub-deadlines if multiple actions exist
+                        if (analysis.actions.size > 1) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            analysis.actions.forEachIndexed { i, action ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 3.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(Color(0xFFD97706), CircleShape)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = action.title,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF334155),
+                                            maxLines = 1
+                                        )
+                                    }
+                                    Text(
+                                        text = action.dateTime,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFD97706)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // ==============================================================
+                // CARD 4: EXTRACTED OCR TEXT (On-Device ML Kit)
+                // ==============================================================
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1965,7 +2131,7 @@ fun NoticeDetailsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "View Extracted OCR Text",
+                                    text = AppStrings.get("qa_extracted_ocr"),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF334155)
@@ -2015,7 +2181,7 @@ fun NoticeDetailsScreen(
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                text = "Copy Text",
+                                                text = AppStrings.get("qa_copy_text"),
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color(0xFF2563EB)
@@ -2045,7 +2211,7 @@ fun NoticeDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Review & Confirm Actions (${analysis.actions.size})",
+                        text = "${AppStrings.get("qa_review_actions")} (${analysis.actions.size})",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -2062,7 +2228,6 @@ fun NoticeDetailsScreen(
         }
     }
 }
-
 
 @Composable
 fun MyDocumentsScreen(
