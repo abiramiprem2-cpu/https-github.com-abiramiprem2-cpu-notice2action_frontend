@@ -15,6 +15,8 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Help
 import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.DocumentAnalysisSession
+import com.simats.notice2action.data.ActionTask
+import com.simats.notice2action.data.NoticeAnalysisResult
 import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.SessionManager
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,7 +44,8 @@ fun DashboardScreen(
     onRemindersClicked: () -> Unit = {},
     onMyDocumentsClicked: () -> Unit = {},
     onTasksClicked: () -> Unit = {},
-    onCalendarClicked: () -> Unit = {}
+    onCalendarClicked: () -> Unit = {},
+    onVoiceAssistantClicked: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val savedUser = remember { SessionManager.getSavedUser(context) }
@@ -112,14 +116,6 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text(
-                            text = AppStrings.get("dash_category"),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF94A3B8),
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "${AppStrings.get("dash_good_morning")}, $displayName!",
                             fontSize = 24.sp,
@@ -200,6 +196,68 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // AI Voice Assistant Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(Color(0xFF2563EB), Color(0xFF4F46E5))
+                            ),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable { onVoiceAssistantClicked() }
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "🎙️", fontSize = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "AI Voice Assistant",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Tap to speak or control Notice2Action",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .background(Color.White.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "Speak",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -264,9 +322,11 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val activeDoc: NoticeAnalysisResult? = DocumentAnalysisSession.activeResult
+                    val docsProcessedCount = if (activeDoc != null) 1 else 0
                     Column(modifier = Modifier.weight(1f).clickable { onMyDocumentsClicked() }) {
                         Text(
-                            text = "12",
+                            text = docsProcessedCount.toString(),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
@@ -279,7 +339,7 @@ fun DashboardScreen(
                     }
                     Column(modifier = Modifier.weight(1f).clickable { onTasksClicked() }) {
                         Text(
-                            text = "5",
+                            text = DocumentAnalysisSession.confirmedTasks.size.toString(),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
@@ -316,15 +376,195 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .clickable { onMyDocumentsClicked() }
-                        .padding(14.dp)
-                ) {
-                    Column {
+                val activeDoc = DocumentAnalysisSession.activeResult
+                if (activeDoc == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(1.dp, RoundedCornerShape(16.dp))
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .clickable { onUploadDocumentClicked() }
+                            .padding(14.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "No Recent Documents",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Upload or scan a notice document to get started.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(2.dp, RoundedCornerShape(16.dp))
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .clickable { onMyDocumentsClicked() }
+                            .padding(14.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Description,
+                                            contentDescription = null,
+                                            tint = Color(0xFF2563EB),
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = activeDoc.documentTitle,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0F172A)
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "PDF • Scanned notice",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF64748B)
+                                        )
+                                    }
+                                }
+
+                                Icon(
+                                    imageVector = Icons.Default.MoreHoriz,
+                                    contentDescription = null,
+                                    tint = Color(0xFF94A3B8),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = AppStrings.get("dash_verify_dates"),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFD97706)
+                                    )
+                                }
+                                Text(
+                                    text = "${activeDoc.actions.size} ${AppStrings.get("dash_actions_identified")}",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = AppStrings.get("dash_upcoming_deadlines"),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                val upcomingTasks = DocumentAnalysisSession.confirmedTasks
+                if (upcomingTasks.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(1.dp, RoundedCornerShape(16.dp))
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .clickable { onTasksClicked() }
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Color(0xFFEFF6FF), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "📅", fontSize = 18.sp)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "No Upcoming Deadlines",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Upload a document to track upcoming deadlines.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    val firstTask: ActionTask = upcomingTasks.first()
+                    val (priorityBg, priorityTextColor) = when {
+                        firstTask.priorityText.equals("High", ignoreCase = true) -> Pair(Color(0xFFFEE2E2), Color(0xFFDC2626))
+                        firstTask.priorityText.equals("Low", ignoreCase = true) -> Pair(Color(0xFFDCFCE7), Color(0xFF16A34A))
+                        else -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(2.dp, RoundedCornerShape(16.dp))
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .clickable { onTasksClicked() }
+                            .padding(14.dp)
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -333,164 +573,65 @@ fun DashboardScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp)),
+                                        .size(36.dp)
+                                        .background(Color(0xFFDBEAFE), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Description,
-                                        contentDescription = null,
-                                        tint = Color(0xFF2563EB),
-                                        modifier = Modifier.size(22.dp)
-                                    )
+                                    Text(text = "📅", fontSize = 18.sp)
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = DocumentAnalysisSession.activeResult?.documentTitle ?: "Official Notice Document",
-                                        fontSize = 14.sp,
+                                        text = firstTask.title,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "PDF • 15 Oct 2026 • 2 pages",
+                                        text = activeDoc?.documentTitle ?: "Notice Document",
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Event,
+                                            contentDescription = null,
+                                            tint = Color(0xFF64748B),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = firstTask.dateTime,
+                                            fontSize = 10.sp,
+                                            color = Color(0xFF64748B)
+                                        )
+                                    }
                                 }
                             }
 
-                            Icon(
-                                imageVector = Icons.Default.MoreHoriz,
-                                contentDescription = null,
-                                tint = Color(0xFF94A3B8),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = AppStrings.get("dash_verify_dates"),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFD97706)
-                                )
-                            }
-                            Text(
-                                text = "3 ${AppStrings.get("dash_actions_identified")}",
-                                fontSize = 11.sp,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = AppStrings.get("dash_upcoming_deadlines"),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
-                    )
-                    Text(
-                        text = AppStrings.get("dash_calendar"),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF2563EB),
-                        modifier = Modifier.clickable { onCalendarClicked() }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(16.dp))
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .clickable { onTasksClicked() }
-                        .padding(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .background(Color(0xFFE2E8F0), RoundedCornerShape(4.dp))
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Submit project proposal",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A)
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Innovation Week 2026",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Event,
-                                        contentDescription = null,
-                                        tint = Color(0xFF64748B),
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                            Column(horizontalAlignment = Alignment.End) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(priorityBg, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
                                     Text(
-                                        text = "20 Oct • 5:00 PM",
+                                        text = firstTask.priorityText,
                                         fontSize = 10.sp,
-                                        color = Color(0xFF64748B)
+                                        fontWeight = FontWeight.Bold,
+                                        color = priorityTextColor
                                     )
                                 }
-                            }
-                        }
-
-                        Column(horizontalAlignment = Alignment.End) {
-                            Box(
-                                modifier = Modifier
-                                    .background(Color(0xFFFEE2E2), RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "High",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFDC2626)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = Color(0xFF94A3B8),
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = null,
-                                tint = Color(0xFF94A3B8),
-                                modifier = Modifier.size(16.dp)
-                            )
                         }
                     }
                 }
@@ -522,6 +663,7 @@ fun NavigationDrawerScreen(
     onTasksClicked: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    var showLogoutDialog by remember { mutableStateOf(false) }
     val savedUser = remember { SessionManager.getSavedUser(context) }
     val resolvedUser = user ?: UserSession.currentUser ?: savedUser
 
@@ -573,11 +715,10 @@ fun NavigationDrawerScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "NOTICE2ACTION",
-                                fontSize = 11.sp,
+                                text = "Notice2Action",
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2563EB),
-                                letterSpacing = 1.sp
+                                color = Color(0xFF2563EB)
                             )
                             IconButton(
                                 onClick = onClose,
@@ -625,8 +766,6 @@ fun NavigationDrawerScreen(
                             Triple(Icons.Default.Description, "menu_documents", onMyDocumentsClicked),
                             Triple(Icons.AutoMirrored.Filled.Assignment, "menu_tasks", onTasksClicked),
                             Triple(Icons.Default.Notifications, "menu_reminders", onRemindersClicked),
-                            Triple(Icons.Default.CalendarToday, "menu_calendar", onCalendarClicked),
-                            Triple(Icons.Default.Group, "menu_groups", onGroupsClicked),
                             Triple(Icons.Default.Settings, "menu_settings", onSettingsClicked),
                             Triple(Icons.AutoMirrored.Filled.Help, "menu_help", onHelpClicked)
                         )
@@ -670,7 +809,7 @@ fun NavigationDrawerScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { onLogout() }
+                                .clickable { showLogoutDialog = true }
                                 .padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -714,5 +853,47 @@ fun NavigationDrawerScreen(
                 }
             }
         }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text(
+                    text = "Logout of Notice2Action?",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to log out of your workspace account?",
+                    fontSize = 13.sp,
+                    color = Color(0xFF475569)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        UserSession.clear()
+                        SessionManager.logout(context)
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Logout", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(text = "Cancel", color = Color(0xFF64748B))
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }

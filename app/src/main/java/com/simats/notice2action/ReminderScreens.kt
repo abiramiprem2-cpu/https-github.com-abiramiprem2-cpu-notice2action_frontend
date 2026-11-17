@@ -1,5 +1,7 @@
-﻿package com.simats.notice2action
+package com.simats.notice2action
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,11 +13,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import com.simats.notice2action.data.NotificationHelper
 
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -30,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.compose.material.icons.filled.Add
+import android.widget.Toast
+import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
 import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.ReminderItemModel
 
@@ -38,8 +46,10 @@ fun RemindersScreen(
     onHomeClicked: () -> Unit,
     onProfileClicked: () -> Unit,
     onSettingsClicked: () -> Unit = {},
-    onTasksClicked: () -> Unit = {}
+    onTasksClicked: () -> Unit = {},
+    onUploadClicked: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Upcoming") }
     var reminderToDelete by remember { mutableStateOf<ReminderItemModel?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
@@ -60,14 +70,6 @@ fun RemindersScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp)
             ) {
-                // Header
-                Text(
-                    text = "E â€¢ DEADLINES & NOTIFICATIONS",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B),
-                    letterSpacing = 1.sp
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,7 +98,7 @@ fun RemindersScreen(
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "âš²",
+                            text = "⚙",
                             fontSize = 20.sp,
                             color = Color(0xFF2563EB),
                             modifier = Modifier.clickable { onSettingsClicked() }
@@ -106,120 +108,195 @@ fun RemindersScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Tabs: Upcoming / Past
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFEEF2FF), RoundedCornerShape(12.dp))
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
-                                if (selectedTab == "Upcoming") Color.White else Color.Transparent,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .shadow(
-                                if (selectedTab == "Upcoming") 1.dp else 0.dp,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .clickable { selectedTab = "Upcoming" }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Upcoming",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (selectedTab == "Upcoming") Color(0xFF2563EB) else Color(0xFF64748B)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
-                                if (selectedTab == "Past") Color.White else Color.Transparent,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .shadow(
-                                if (selectedTab == "Past") 1.dp else 0.dp,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .clickable { selectedTab = "Past" }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Past",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (selectedTab == "Past") Color(0xFF2563EB) else Color(0xFF64748B)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Subheader
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${ReminderManager.getScheduledCount()} scheduled â€¢ ${ReminderManager.getActiveCount()} active",
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "October 2026",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2563EB)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Cards list from ReminderManager
-                val displayedReminders = if (selectedTab == "Upcoming") {
-                    ReminderManager.getUpcomingReminders()
-                } else {
-                    ReminderManager.getPastReminders()
-                }
-
-                if (displayedReminders.isEmpty()) {
-                    Box(
+                if (ReminderManager.reminders.isEmpty()) {
+                    // Empty Reminders View when no document has been uploaded yet
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(vertical = 32.dp, horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .background(Color(0xFFEEF2FF), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "🔔", fontSize = 36.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Text(
-                            text = if (selectedTab == "Upcoming") "No upcoming reminders." else "No past reminders.",
-                            fontSize = 13.sp,
-                            color = Color(0xFF64748B)
+                            text = "No Reminders Found",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A),
+                            textAlign = TextAlign.Center
                         )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "Your reminder list is empty. Upload or scan a notice document to automatically extract and schedule smart deadline reminders.",
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 18.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = { onUploadClicked() },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "📄 Upload or Scan Document",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedButton(
+                            onClick = { showAddDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        ) {
+                            Text(
+                                text = "+ Add Custom Reminder",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                        }
                     }
                 } else {
-                    displayedReminders.forEach { item ->
-                        ReminderCard(
-                            item = item,
-                            onToggle = { ReminderManager.toggleReminder(item.id) },
-                            onEdit = { onSettingsClicked() },
-                            onDelete = { reminderToDelete = item }
+                    // Tabs: Upcoming / Past
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFEEF2FF), RoundedCornerShape(12.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (selectedTab == "Upcoming") Color.White else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .shadow(
+                                    if (selectedTab == "Upcoming") 1.dp else 0.dp,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable { selectedTab = "Upcoming" }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Upcoming",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (selectedTab == "Upcoming") Color(0xFF2563EB) else Color(0xFF64748B)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (selectedTab == "Past") Color.White else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .shadow(
+                                    if (selectedTab == "Past") 1.dp else 0.dp,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable { selectedTab = "Past" }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Past",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (selectedTab == "Past") Color(0xFF2563EB) else Color(0xFF64748B)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Subheader
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${ReminderManager.getScheduledCount()} scheduled • ${ReminderManager.getActiveCount()} active",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "October 2026",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Cards list from ReminderManager
+                    val displayedReminders = if (selectedTab == "Upcoming") {
+                        ReminderManager.getUpcomingReminders()
+                    } else {
+                        ReminderManager.getPastReminders()
+                    }
+
+                    if (displayedReminders.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (selectedTab == "Upcoming") "No upcoming reminders from uploaded notices." else "No past reminders found.",
+                                fontSize = 13.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
+                    } else {
+                        displayedReminders.forEach { item ->
+                            ReminderCard(
+                                item = item,
+                                onToggle = { ReminderManager.toggleReminder(item.id, context) },
+                                onEdit = { onSettingsClicked() },
+                                onDelete = { reminderToDelete = item }
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
                     }
                 }
 
@@ -292,7 +369,7 @@ fun RemindersScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        reminderToDelete?.let { ReminderManager.removeReminder(it.id) }
+                        reminderToDelete?.let { ReminderManager.removeReminder(it.id, context) }
                         reminderToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
@@ -313,7 +390,7 @@ fun RemindersScreen(
 
     if (showAddDialog) {
         var newTitle by remember { mutableStateOf("") }
-        var newDeadline by remember { mutableStateOf("25 Oct 2026 â€¢ 5:00 PM") }
+        var newDeadline by remember { mutableStateOf("") }
         var selectedPreset by remember { mutableStateOf("1 day before (9:00 AM)") }
 
         AlertDialog(
@@ -380,7 +457,8 @@ fun RemindersScreen(
                                 deadline = newDeadline.trim(),
                                 scheduled = "$selectedPreset alert",
                                 source = "Custom Reminder",
-                                preset = selectedPreset
+                                preset = selectedPreset,
+                                context = context
                             )
                         }
                         showAddDialog = false
@@ -553,9 +631,41 @@ fun ReminderCard(
 fun ReminderSettingsScreen(
     onBackClicked: () -> Unit
 ) {
+    val context = LocalContext.current
     var allowNotifications by remember { mutableStateOf(true) }
-    var soundEnabled by remember { mutableStateOf(true) }
-    var vibrationEnabled by remember { mutableStateOf(false) }
+    var soundEnabled by remember { mutableStateOf(NotificationHelper.isSoundEnabled) }
+    var vibrationEnabled by remember { mutableStateOf(NotificationHelper.isVibrationEnabled) }
+
+    var customDate by remember { mutableStateOf("19 Oct 2026") }
+    var customTime by remember { mutableStateOf("9:00 AM") }
+
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            val cal = Calendar.getInstance().apply { set(year, month, dayOfMonth) }
+            val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            customDate = sdf.format(cal.time)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+    val timePickerDialog = TimePickerDialog(
+        context,
+        { _, hourOfDay, minute ->
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hourOfDay)
+                set(Calendar.MINUTE, minute)
+            }
+            val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
+            customTime = sdf.format(cal.time)
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        false
+    )
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -574,14 +684,6 @@ fun ReminderSettingsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Header
-                Text(
-                    text = "E • DEADLINES & NOTIFICATIONS",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B),
-                    letterSpacing = 1.sp
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -751,19 +853,21 @@ fun ReminderSettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Surface(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { datePickerDialog.show() },
                             color = Color.White,
                             shape = RoundedCornerShape(12.dp),
                             shadowElevation = 1.dp,
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            border = BorderStroke(1.dp, Color(0xFF2563EB))
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "19 Oct 2026", fontSize = 13.sp, color = Color(0xFF0F172A))
-                                Text(text = "📅", fontSize = 14.sp)
+                                Text(text = customDate, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                Icon(Icons.Default.Event, contentDescription = "Pick Date", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -779,22 +883,45 @@ fun ReminderSettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Surface(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { timePickerDialog.show() },
                             color = Color.White,
                             shape = RoundedCornerShape(12.dp),
                             shadowElevation = 1.dp,
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            border = BorderStroke(1.dp, Color(0xFF2563EB))
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "9:00 AM", fontSize = 13.sp, color = Color(0xFF0F172A))
-                                Text(text = "🕒", fontSize = 14.sp)
+                                Text(text = customTime, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                Icon(Icons.Default.Schedule, contentDescription = "Pick Time", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Button(
+                    onClick = {
+                        val fullSchedule = "$customDate • $customTime"
+                        ReminderManager.addCustomReminder(
+                            title = "Custom Scheduled Task",
+                            deadline = fullSchedule,
+                            scheduled = fullSchedule,
+                            source = "Custom Schedule",
+                            preset = "Custom Local Time",
+                            context = context
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth().height(42.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(text = "Schedule Custom Reminder", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -828,7 +955,12 @@ fun ReminderSettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🔊", fontSize = 18.sp)
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                    contentDescription = "Sound",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(20.dp)
+                                )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
@@ -839,7 +971,7 @@ fun ReminderSettingsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "Soft chime",
+                                        text = if (soundEnabled) "Sound enabled" else "Muted",
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -847,7 +979,10 @@ fun ReminderSettingsScreen(
                             }
                             Switch(
                                 checked = soundEnabled,
-                                onCheckedChange = { soundEnabled = it },
+                                onCheckedChange = {
+                                    soundEnabled = it
+                                    NotificationHelper.isSoundEnabled = it
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = Color(0xFF2563EB)
@@ -866,7 +1001,12 @@ fun ReminderSettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "📳", fontSize = 18.sp)
+                                Icon(
+                                    imageVector = Icons.Default.Vibration,
+                                    contentDescription = "Vibration",
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(20.dp)
+                                )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = "Vibration",
@@ -877,7 +1017,10 @@ fun ReminderSettingsScreen(
                             }
                             Switch(
                                 checked = vibrationEnabled,
-                                onCheckedChange = { vibrationEnabled = it },
+                                onCheckedChange = {
+                                    vibrationEnabled = it
+                                    NotificationHelper.isVibrationEnabled = it
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = Color(0xFF2563EB),

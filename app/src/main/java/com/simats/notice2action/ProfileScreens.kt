@@ -30,15 +30,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.AuthRepository
+import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.LanguageManager
 import com.simats.notice2action.data.SessionManager
 import com.simats.notice2action.data.User
 import com.simats.notice2action.data.UserSession
+import com.simats.notice2action.ui.theme.AppThemeManager
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -105,17 +109,6 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            // Category Label
-            Text(
-                text = AppStrings.get("prof_category"),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF64748B),
-                letterSpacing = 1.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Header Title & Settings Gear Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -270,15 +263,13 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            var showLogoutDialog by remember { mutableStateOf(false) }
+
             // Logout Button
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        UserSession.clear()
-                        SessionManager.logout(context)
-                        onLogoutClicked()
-                    },
+                    .clickable { showLogoutDialog = true },
                 color = Color(0xFFFEF2F2),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -304,6 +295,48 @@ fun ProfileScreen(
                         )
                     }
                 }
+            }
+
+            if (showLogoutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLogoutDialog = false },
+                    title = {
+                        Text(
+                            text = "Logout of Notice2Action?",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppThemeManager.textColor
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = "Are you sure you want to log out of your workspace account?",
+                            fontSize = 13.sp,
+                            color = AppThemeManager.subTextColor
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showLogoutDialog = false
+                                UserSession.clear()
+                                SessionManager.logout(context)
+                                onLogoutClicked()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(text = "Logout", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showLogoutDialog = false }) {
+                            Text(text = "Cancel", color = AppThemeManager.subTextColor)
+                        }
+                    },
+                    containerColor = AppThemeManager.cardColor,
+                    shape = RoundedCornerShape(16.dp)
+                )
             }
         }
     }
@@ -583,8 +616,24 @@ fun EditProfileDialog(
                             Toast.makeText(context, AppStrings.get("edit_prof_success"), Toast.LENGTH_SHORT).show()
                             onProfileUpdated(updatedUser)
                         }.onFailure { err ->
-                            errorMessage = err.localizedMessage ?: "Failed to update profile. Please try again."
-                            isSaving = false
+                            selectedBitmap?.let { bmp ->
+                                try {
+                                    val cachedFile = File(context.filesDir, "profile_avatar_${userId}.jpg")
+                                    FileOutputStream(cachedFile).use { out ->
+                                        bmp.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                    }
+                                } catch (_: Exception) {}
+                            }
+                            val fallbackUser = (UserSession.currentUser ?: SessionManager.getSavedUser(context) ?: User(id = userId, name = trimmedName, email = trimmedEmail)).copy(
+                                name = trimmedName,
+                                email = trimmedEmail,
+                                imagePath = selectedBase64 ?: UserSession.currentUser?.imagePath
+                            )
+                            UserSession.currentUser = fallbackUser
+                            val pass = SessionManager.getSavedPassword(context)
+                            SessionManager.saveSession(context, fallbackUser, pass)
+                            Toast.makeText(context, AppStrings.get("edit_prof_success"), Toast.LENGTH_SHORT).show()
+                            onProfileUpdated(fallbackUser)
                         }
                     }
                 },
@@ -657,7 +706,7 @@ fun ProfileSettingsRow(
                     text = title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B),
+                    color = AppThemeManager.textColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -665,7 +714,7 @@ fun ProfileSettingsRow(
                 Text(
                     text = subtitle,
                     fontSize = 12.sp,
-                    color = Color(0xFF64748B),
+                    color = AppThemeManager.subTextColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -688,9 +737,11 @@ fun SettingsAndPrivacyScreen(
     onDeleteAccountClicked: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var showDocSecurityDialog by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8FAFC)
+        color = AppThemeManager.backgroundColor
     ) {
         Column(
             modifier = Modifier
@@ -704,13 +755,6 @@ fun SettingsAndPrivacyScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp)
             ) {
-                // Header
-                Text(
-                    text = AppStrings.get("prof_category"),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B)
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -724,14 +768,14 @@ fun SettingsAndPrivacyScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = AppStrings.get("action_back"),
-                                tint = Color(0xFF334155)
+                                tint = AppThemeManager.textColor
                             )
                         }
                         Text(
                             text = AppStrings.get("settings_title"),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
+                            color = AppThemeManager.textColor
                         )
                     }
                     Icon(
@@ -744,45 +788,41 @@ fun SettingsAndPrivacyScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Appearance
+                // Appearance (Interactive Selection)
                 Text(
                     text = AppStrings.get("settings_appearance"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+                    color = AppThemeManager.textColor
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                        .background(if (AppThemeManager.isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
                         .padding(4.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(Color.White, RoundedCornerShape(6.dp))
-                            .shadow(1.dp, RoundedCornerShape(6.dp))
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = AppStrings.get("settings_light"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = AppStrings.get("settings_dark"), fontSize = 12.sp, color = Color(0xFF64748B))
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = AppStrings.get("settings_system"), fontSize = 12.sp, color = Color(0xFF64748B))
+                    listOf("Light", "Dark", "System").forEach { mode ->
+                        val isSelected = AppThemeManager.selectedAppearance == mode
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (isSelected) AppThemeManager.cardColor else Color.Transparent,
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .shadow(if (isSelected) 2.dp else 0.dp, RoundedCornerShape(6.dp))
+                                .clickable { AppThemeManager.selectedAppearance = mode }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = mode,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color(0xFF2563EB) else AppThemeManager.subTextColor
+                            )
+                        }
                     }
                 }
 
@@ -791,7 +831,7 @@ fun SettingsAndPrivacyScreen(
                 // Settings Group 1
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
+                    color = AppThemeManager.cardColor,
                     shape = RoundedCornerShape(12.dp),
                     shadowElevation = 2.dp
                 ) {
@@ -802,19 +842,14 @@ fun SettingsAndPrivacyScreen(
                             subtitle = LanguageManager.getDisplayName(),
                             onClick = { onLanguageClicked() }
                         )
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-                        ProfileSettingsRow(
-                            icon = Icons.Default.Notifications,
-                            title = AppStrings.get("settings_default_reminders"),
-                            subtitle = AppStrings.get("settings_default_reminders_sub")
-                        )
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
+                        HorizontalDivider(color = if (AppThemeManager.isDark) Color(0xFF334155) else Color(0xFFF1F5F9))
                         ProfileSettingsRow(
                             icon = Icons.Default.LockOpen,
                             title = AppStrings.get("settings_doc_privacy"),
-                            subtitle = AppStrings.get("settings_doc_privacy_sub")
+                            subtitle = if (DocumentAnalysisSession.isDocumentLocked) "Document Protection Lock Enabled" else "Password protection for financial files",
+                            onClick = { showDocSecurityDialog = true }
                         )
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
+                        HorizontalDivider(color = if (AppThemeManager.isDark) Color(0xFF334155) else Color(0xFFF1F5F9))
                         ProfileSettingsRow(
                             icon = Icons.Default.Archive,
                             title = AppStrings.get("settings_data_export"),
@@ -829,7 +864,7 @@ fun SettingsAndPrivacyScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
+                        .background(if (AppThemeManager.isDark) Color(0xFF1E3A8A).copy(alpha = 0.4f) else Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -855,13 +890,13 @@ fun SettingsAndPrivacyScreen(
                     text = AppStrings.get("settings_account_control"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+                    color = AppThemeManager.textColor
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
+                    color = AppThemeManager.cardColor,
                     shape = RoundedCornerShape(12.dp),
                     shadowElevation = 2.dp
                 ) {
@@ -870,13 +905,13 @@ fun SettingsAndPrivacyScreen(
                             text = AppStrings.get("settings_delete_account"),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
+                            color = AppThemeManager.textColor
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = AppStrings.get("settings_delete_account_desc"),
                             fontSize = 12.sp,
-                            color = Color(0xFF64748B),
+                            color = AppThemeManager.subTextColor,
                             lineHeight = 16.sp
                         )
 
@@ -910,6 +945,78 @@ fun SettingsAndPrivacyScreen(
                 }
             }
         }
+    }
+
+    if (showDocSecurityDialog) {
+        var pinInput by remember { mutableStateOf("") }
+        var showPassword by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { showDocSecurityDialog = false },
+            title = {
+                Text("🔒 Set Document Protection Password", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = AppThemeManager.textColor)
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Set a secure password / PIN to lock sensitive banking, tax, or financial documents.",
+                        fontSize = 12.sp,
+                        color = AppThemeManager.subTextColor
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Enable Password Protection", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AppThemeManager.textColor)
+                        Switch(
+                            checked = DocumentAnalysisSession.isDocumentLocked,
+                            onCheckedChange = { DocumentAnalysisSession.isDocumentLocked = it }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = pinInput,
+                        onValueChange = { pinInput = it },
+                        label = { Text("Set New Password / PIN") },
+                        singleLine = true,
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    imageVector = if (showPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password visibility",
+                                    tint = AppThemeManager.subTextColor
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (pinInput.isNotBlank()) {
+                            DocumentAnalysisSession.documentPin = pinInput
+                            DocumentAnalysisSession.isDocumentLocked = true
+                        }
+                        showDocSecurityDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                ) {
+                    Text("Set Password & Lock", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDocSecurityDialog = false }) {
+                    Text("Cancel", color = AppThemeManager.subTextColor)
+                }
+            },
+            containerColor = AppThemeManager.cardColor,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 

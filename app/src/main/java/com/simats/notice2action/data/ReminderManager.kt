@@ -1,74 +1,41 @@
 package com.simats.notice2action.data
 
+import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import java.util.UUID
 
 data class ReminderItemModel(
     val id: String = UUID.randomUUID().toString(),
+    val taskId: String = UUID.randomUUID().toString(),
+    val userId: String = UserSession.currentUser?.id?.toString() ?: "1",
     val title: String,
     val scheduledTime: String,
     val deadline: String,
     var initialEnabled: Boolean = true,
+    var status: String = "active",
     val isPast: Boolean = false,
     val sourceDocument: String = "Notice Document",
     val timingPreset: String = "1 day before (9:00 AM)"
 )
 
 object ReminderManager {
-    // Initial dynamic state seeded with default action reminders
-    val reminders = mutableStateListOf<ReminderItemModel>(
-        ReminderItemModel(
-            id = "1",
-            title = "Submit project proposal and abstract",
-            scheduledTime = "19 Oct 2026 • 9:00 AM",
-            deadline = "20 Oct • 5:00 PM",
-            initialEnabled = true,
-            isPast = false,
-            sourceDocument = "Academic Affairs Notice",
-            timingPreset = "1 day before (9:00 AM)"
-        ),
-        ReminderItemModel(
-            id = "2",
-            title = "Attend team briefing session",
-            scheduledTime = "22 Oct 2026 • 9:00 AM",
-            deadline = "22 Oct • 10:00 AM",
-            initialEnabled = true,
-            isPast = false,
-            sourceDocument = "Academic Affairs Notice",
-            timingPreset = "1 hour before"
-        ),
-        ReminderItemModel(
-            id = "3",
-            title = "Submit expense report & dues",
-            scheduledTime = "22 Oct 2026 • 9:00 AM",
-            deadline = "23 Oct • 6:00 PM",
-            initialEnabled = false,
-            isPast = false,
-            sourceDocument = "Finance & Accounts Notice",
-            timingPreset = "1 day before (9:00 AM)"
-        ),
-        ReminderItemModel(
-            id = "4",
-            title = "Innovation Week Orientation",
-            scheduledTime = "12 Oct 2026 • 10:00 AM",
-            deadline = "12 Oct • 11:30 AM",
-            initialEnabled = true,
-            isPast = true,
-            sourceDocument = "Academic Affairs Notice",
-            timingPreset = "At event"
-        )
-    )
+    val reminders = mutableStateListOf<ReminderItemModel>()
 
     fun addFromActionTask(
         task: ActionTask,
         documentTitle: String,
-        preset: String = "1 day before (9:00 AM)"
+        preset: String = "1 day before (9:00 AM)",
+        context: Context? = null
     ): ReminderItemModel {
-        // Prevent duplicate reminders for the same task
-        val existing = reminders.find { it.title.equals(task.title, ignoreCase = true) }
-        if (existing != null) {
-            existing.initialEnabled = true
-            return existing
+        val existingIndex = reminders.indexOfFirst { it.title.equals(task.title, ignoreCase = true) }
+        if (existingIndex != -1) {
+            val existingItem = reminders[existingIndex]
+            val updatedItem = existingItem.copy(initialEnabled = true, status = "active")
+            reminders[existingIndex] = updatedItem
+            if (context != null) {
+                NotificationHelper.scheduleTaskReminder(context, updatedItem)
+            }
+            return updatedItem
         }
 
         val calculatedScheduled = if (task.dateTime.contains("•")) {
@@ -80,20 +47,29 @@ object ReminderManager {
 
         val newReminder = ReminderItemModel(
             id = UUID.randomUUID().toString(),
+            taskId = UUID.randomUUID().toString(),
             title = task.title,
             scheduledTime = calculatedScheduled,
             deadline = task.dateTime,
             initialEnabled = true,
+            status = "active",
             isPast = false,
             sourceDocument = documentTitle,
             timingPreset = preset
         )
         reminders.add(0, newReminder)
+        if (context != null) {
+            NotificationHelper.scheduleTaskReminder(context, newReminder)
+        }
         return newReminder
     }
 
     fun isReminderActive(taskTitle: String): Boolean {
-        return reminders.any { it.title.equals(taskTitle, ignoreCase = true) && it.initialEnabled }
+        return reminders.any { it.title.equals(taskTitle, ignoreCase = true) && it.initialEnabled && it.status == "active" }
+    }
+
+    fun isReminderActiveById(reminderId: String): Boolean {
+        return reminders.any { it.id == reminderId && it.initialEnabled && it.status == "active" }
     }
 
     fun addCustomReminder(
@@ -101,39 +77,107 @@ object ReminderManager {
         deadline: String,
         scheduled: String,
         source: String = "Custom Reminder",
-        preset: String = "1 day before (9:00 AM)"
+        preset: String = "1 day before (9:00 AM)",
+        context: Context? = null
     ) {
         val newReminder = ReminderItemModel(
             id = UUID.randomUUID().toString(),
+            taskId = UUID.randomUUID().toString(),
             title = title,
             scheduledTime = scheduled,
             deadline = deadline,
             initialEnabled = true,
+            status = "active",
             isPast = false,
             sourceDocument = source,
             timingPreset = preset
         )
         reminders.add(0, newReminder)
-    }
-
-    fun toggleReminder(id: String) {
-        val index = reminders.indexOfFirst { it.id == id }
-        if (index != -1) {
-            val current = reminders[index]
-            reminders[index] = current.copy(initialEnabled = !current.initialEnabled)
+        if (context != null) {
+            NotificationHelper.scheduleTaskReminder(context, newReminder)
         }
     }
 
-    fun removeReminder(id: String) {
-        reminders.removeAll { it.id == id }
+    fun editReminder(
+        id: String,
+        newTitle: String,
+        newDeadline: String,
+        newScheduled: String,
+        preset: String = "1 day before (9:00 AM)",
+        context: Context? = null
+    ) {
+        val index = reminders.indexOfFirst { it.id == id }
+        if (index != -1) {
+            val oldItem = reminders[index]
+            if (context != null) {
+                NotificationHelper.cancelTaskReminder(context, oldItem.id, oldItem.title)
+            }
+            val updated = oldItem.copy(
+                title = newTitle,
+                deadline = newDeadline,
+                scheduledTime = newScheduled,
+                timingPreset = preset,
+                status = "active",
+                initialEnabled = true
+            )
+            reminders[index] = updated
+            if (context != null) {
+                NotificationHelper.scheduleTaskReminder(context, updated)
+            }
+        }
     }
 
-    fun getUpcomingReminders(): List<ReminderItemModel> = reminders.filter { !it.isPast }
+    fun completeTaskReminders(taskTitle: String, context: Context? = null) {
+        reminders.forEachIndexed { index, item ->
+            if (item.title.equals(taskTitle, ignoreCase = true) || item.id == taskTitle) {
+                val updated = item.copy(status = "completed", initialEnabled = false)
+                reminders[index] = updated
+                if (context != null) {
+                    NotificationHelper.cancelTaskReminder(context, item.id, item.title)
+                }
+            }
+        }
+    }
 
-    fun getPastReminders(): List<ReminderItemModel> = reminders.filter { it.isPast }
+    fun toggleReminder(id: String, context: Context? = null) {
+        val index = reminders.indexOfFirst { it.id == id }
+        if (index != -1) {
+            val current = reminders[index]
+            val newStatus = !current.initialEnabled
+            val newStatusStr = if (newStatus) "active" else "cancelled"
+            reminders[index] = current.copy(initialEnabled = newStatus, status = newStatusStr)
+            if (context != null) {
+                if (newStatus) {
+                    NotificationHelper.scheduleTaskReminder(context, reminders[index])
+                } else {
+                    NotificationHelper.cancelTaskReminder(context, current.id, current.title)
+                }
+            }
+        }
+    }
 
-    fun getActiveCount(): Int = reminders.count { !it.isPast && it.initialEnabled }
+    fun removeReminder(id: String, context: Context? = null) {
+        val reminder = reminders.find { it.id == id }
+        if (reminder != null) {
+            if (context != null) {
+                NotificationHelper.cancelTaskReminder(context, reminder.id, reminder.title)
+            }
+            reminder.status = "deleted"
+            reminders.remove(reminder)
+        }
+    }
 
-    fun getScheduledCount(): Int = reminders.count { !it.isPast }
+    fun reschedulePendingReminders(context: Context) {
+        reminders.filter { it.status == "active" && it.initialEnabled && !it.isPast }.forEach { item ->
+            NotificationHelper.scheduleTaskReminder(context, item)
+        }
+    }
+
+    fun getUpcomingReminders(): List<ReminderItemModel> = reminders.filter { !it.isPast && it.status == "active" }
+
+    fun getPastReminders(): List<ReminderItemModel> = reminders.filter { it.isPast && it.status == "active" }
+
+    fun getActiveCount(): Int = reminders.count { !it.isPast && it.initialEnabled && it.status == "active" }
+
+    fun getScheduledCount(): Int = reminders.count { !it.isPast && it.status == "active" }
 }
-

@@ -30,7 +30,9 @@ data class ActionTask(
     val statusText: String = "Verified date",
     val quote: String = "",
     val category: String = "Academic",
-    var isConfirmed: Boolean = true
+    var isConfirmed: Boolean = true,
+    var reminderTime: String = "19 Oct 2026 • 9:00 AM",
+    var checklistItems: List<String> = emptyList()
 )
 
 data class NoticeAnalysisResult(
@@ -59,7 +61,15 @@ object DocumentAnalysisSession {
     var analysisStatus by mutableStateOf("Ready")
 
     var activeResult by mutableStateOf<NoticeAnalysisResult?>(null)
+    var selectedTask by mutableStateOf<ActionTask?>(null)
     val confirmedTasks = mutableStateListOf<ActionTask>()
+
+    // Document Lock & Privacy State
+    var isDocumentLocked by mutableStateOf(false)
+    var isImportantDocument by mutableStateOf(false)
+    var documentPin by mutableStateOf("1234")
+    var isUnlockedForSession by mutableStateOf(false)
+    var askLockPromptAfterUpload by mutableStateOf(false)
 
     init {
         activeResult = null
@@ -97,6 +107,10 @@ object DocumentAnalysisSession {
 
         confirmedTasks.clear()
         confirmedTasks.addAll(result.actions)
+
+        result.actions.forEach { action ->
+            ReminderManager.addFromActionTask(action, result.documentTitle, context = context)
+        }
 
         return result
     }

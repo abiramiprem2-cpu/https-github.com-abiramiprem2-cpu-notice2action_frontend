@@ -1,9 +1,16 @@
 package com.simats.notice2action
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,12 +18,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.LanguageManager
+import com.simats.notice2action.data.NotificationHelper
 import com.simats.notice2action.data.SessionManager
 import com.simats.notice2action.data.UserSession
 import com.simats.notice2action.ui.theme.Notice2actionTheme
 import kotlinx.coroutines.delay
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.simats.notice2action.voice.VoiceAssistantDialog
+import com.simats.notice2action.voice.VoiceAssistantFloatingButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -26,11 +44,64 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LanguageManager.init(this)
+        NotificationHelper.createNotificationChannel(this)
         enableEdgeToEdge()
         setContent {
             Notice2actionTheme {
                 val context = LocalContext.current
+                val activity = context as? Activity
                 var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
+                var showVoiceAssistant by remember { mutableStateOf(false) }
+                var showExitConfirmDialog by remember { mutableStateOf(false) }
+
+                val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { }
+
+                LaunchedEffect(Unit) {
+                    NotificationHelper.createNotificationChannel(context)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                    try {
+                        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val token = task.result
+                                val prefs = context.getSharedPreferences("notice2action_firebase", Context.MODE_PRIVATE)
+                                prefs.edit().putString("fcm_token", token).apply()
+                                android.util.Log.d("Notice2Action_FCM", "FCM Device Token: $token")
+                            }
+                        }
+                    } catch (_: Exception) {}
+                }
+
+                BackHandler {
+                    when (currentScreen) {
+                        AppScreen.MAIN -> {
+                            showExitConfirmDialog = true
+                        }
+                        AppScreen.SPLASH, AppScreen.ONBOARDING_1, AppScreen.ONBOARDING_2, AppScreen.LOGIN -> {
+                            activity?.finish()
+                        }
+                        AppScreen.TASK_DETAILS, AppScreen.EDIT_TASK -> {
+                            currentScreen = AppScreen.MY_TASKS
+                        }
+                        AppScreen.NOTICE_DETAILS, AppScreen.REVIEW_ACTIONS, AppScreen.UPCOMING_ACTIONS -> {
+                            currentScreen = AppScreen.MAIN
+                        }
+                        AppScreen.DOCUMENT_DETAILS, AppScreen.SHARE_NOTICE -> {
+                            currentScreen = AppScreen.MY_DOCUMENTS
+                        }
+                        AppScreen.LANGUAGE_SETTINGS -> {
+                            currentScreen = AppScreen.SETTINGS_PRIVACY
+                        }
+                        else -> {
+                            currentScreen = AppScreen.MAIN
+                        }
+                    }
+                }
 
                 LaunchedEffect(Unit) {
                     LanguageManager.init(context)
@@ -138,7 +209,8 @@ class MainActivity : ComponentActivity() {
                                 onRemindersClicked = { currentScreen = AppScreen.REMINDERS },
                                 onMyDocumentsClicked = { currentScreen = AppScreen.MY_DOCUMENTS },
                                 onTasksClicked = { currentScreen = AppScreen.MY_TASKS },
-                                onCalendarClicked = { currentScreen = AppScreen.CALENDAR }
+                                onCalendarClicked = { currentScreen = AppScreen.CALENDAR },
+                                onVoiceAssistantClicked = { showVoiceAssistant = true }
                             )
                         }
                         AppScreen.SCAN_DOCUMENT -> {
@@ -215,7 +287,8 @@ class MainActivity : ComponentActivity() {
                                 onHomeClicked = { currentScreen = AppScreen.MAIN },
                                 onProfileClicked = { currentScreen = AppScreen.PROFILE },
                                 onSettingsClicked = { currentScreen = AppScreen.REMINDER_SETTINGS },
-                                onTasksClicked = { currentScreen = AppScreen.MY_TASKS }
+                                onTasksClicked = { currentScreen = AppScreen.MY_TASKS },
+                                onUploadClicked = { currentScreen = AppScreen.UPLOAD_DOCUMENT }
                             )
                         }
                         AppScreen.REMINDER_SETTINGS -> {
@@ -285,7 +358,8 @@ class MainActivity : ComponentActivity() {
                                 onRemindersClicked = { currentScreen = AppScreen.REMINDERS },
                                 onProfileClicked = { currentScreen = AppScreen.PROFILE },
                                 onTaskClicked = { currentScreen = AppScreen.TASK_DETAILS },
-                                onAddTaskClicked = { currentScreen = AppScreen.EDIT_TASK }
+                                onAddTaskClicked = { currentScreen = AppScreen.EDIT_TASK },
+                                onUploadClicked = { currentScreen = AppScreen.UPLOAD_DOCUMENT }
                             )
                         }
                         AppScreen.TASK_DETAILS -> {
@@ -316,6 +390,71 @@ class MainActivity : ComponentActivity() {
                                 onBackClicked = { currentScreen = AppScreen.GROUP_DETAILS }
                             )
                         }
+                    }
+
+                    if (currentScreen != AppScreen.SPLASH &&
+                        currentScreen != AppScreen.ONBOARDING_1 &&
+                        currentScreen != AppScreen.ONBOARDING_2 &&
+                        currentScreen != AppScreen.LOGIN &&
+                        currentScreen != AppScreen.CREATE_ACCOUNT &&
+                        currentScreen != AppScreen.FORGOT_PASSWORD
+                    ) {
+                        VoiceAssistantFloatingButton(
+                            onClick = { showVoiceAssistant = true },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 20.dp, bottom = 80.dp)
+                        )
+                    }
+
+                    if (showVoiceAssistant) {
+                        VoiceAssistantDialog(
+                            onDismiss = { showVoiceAssistant = false },
+                            onNavigate = { screen ->
+                                currentScreen = screen
+                                showVoiceAssistant = false
+                            }
+                        )
+                    }
+
+                    if (showExitConfirmDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showExitConfirmDialog = false },
+                            title = {
+                                Text(
+                                    text = "Exit Notice2Action?",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "Are you sure you want to exit the application?",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF475569)
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showExitConfirmDialog = false
+                                        activity?.finish()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(text = "Exit", color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showExitConfirmDialog = false }) {
+                                    Text(text = "Cancel", color = Color(0xFF64748B))
+                                }
+                            },
+                            containerColor = Color.White,
+                            shape = RoundedCornerShape(16.dp)
+                        )
                     }
                 }
             }

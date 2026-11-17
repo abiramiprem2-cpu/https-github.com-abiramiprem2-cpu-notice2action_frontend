@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
@@ -169,11 +170,21 @@ fun ScanDocumentScreen(
     ) { uri: Uri? ->
         uri?.let {
             try {
-                val inputStream: InputStream? = context.contentResolver.openInputStream(it)
-                capturedBitmap = BitmapFactory.decodeStream(inputStream)
-                inputStream?.close()
+                context.contentResolver.openInputStream(it)?.use { inputStream ->
+                    val bmp = BitmapFactory.decodeStream(inputStream)
+                    if (bmp != null) {
+                        capturedBitmap = bmp
+                        ActiveDocumentSession.setDocument(
+                            uri = it,
+                            bitmap = bmp,
+                            name = "Gallery_Notice_${System.currentTimeMillis()}.jpg",
+                            sizeText = "Gallery Photo",
+                            image = true
+                        )
+                    }
+                }
             } catch (e: Exception) {
-                Toast.makeText(context, "Could not open selected image", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Could not open selected image: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -2813,6 +2824,8 @@ fun MyDocumentsScreen(
     onUploadDocumentClicked: () -> Unit,
     onDocumentClicked: () -> Unit = {}
 ) {
+    val activeDoc = DocumentAnalysisSession.activeResult
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -2855,28 +2868,86 @@ fun MyDocumentsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                DocumentCard(
-                    icon = "📄",
-                    title = "Innovation Week 2026",
-                    details = "PDF • 15 Oct 2026 • 2 pages",
-                    tagText = "Verify dates",
-                    tagBgColor = Color(0xFFFEF3C7),
-                    tagTextColor = Color(0xFFD97706),
-                    subtitle = "3 actions identified",
-                    onClick = { onDocumentClicked() }
-                )
+                if (activeDoc == null) {
+                    // Empty State View
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp, horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .background(Color(0xFFEEF2FF), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "📄", fontSize = 36.sp)
+                        }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                    onClick = { onUploadDocumentClicked() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF2FF)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(text = "Upload Document", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3B82F6))
+                        Text(
+                            text = "No Documents Uploaded",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "Upload or scan a notice document to view your extracted documents here.",
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 18.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = { onUploadDocumentClicked() },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "📄 Upload or Scan Document",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                } else {
+                    // Display ONLY the recent uploaded document entry
+                    DocumentCard(
+                        icon = "📄",
+                        title = activeDoc.documentTitle,
+                        details = "PDF • Scanned notice document",
+                        tagText = "Verify dates",
+                        tagBgColor = Color(0xFFFEF3C7),
+                        tagTextColor = Color(0xFFD97706),
+                        subtitle = "${activeDoc.actions.size} actions identified",
+                        onClick = { onDocumentClicked() }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { onUploadDocumentClicked() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF2FF)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = "Upload New Document", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3B82F6))
+                    }
                 }
             }
         }
@@ -2966,6 +3037,11 @@ fun DocumentDetailsScreen(
     onBackClicked: () -> Unit,
     onShareClicked: () -> Unit = {}
 ) {
+    val activeDoc = DocumentAnalysisSession.activeResult
+    val isLocked = DocumentAnalysisSession.isDocumentLocked && !DocumentAnalysisSession.isUnlockedForSession
+    var pinInput by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF8FAFC)
@@ -3004,10 +3080,19 @@ fun DocumentDetailsScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Innovation Week 2026",
+                    text = activeDoc?.documentTitle ?: "Notice Document",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0F172A)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = activeDoc?.keySummary ?: "Extracted notice details.",
+                    fontSize = 13.sp,
+                    color = Color(0xFF64748B),
+                    lineHeight = 18.sp
                 )
             }
 
@@ -3022,6 +3107,65 @@ fun DocumentDetailsScreen(
                 Text(text = "Share Notice", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
+    }
+
+    if (isLocked) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "🔒 Document Protection Lock", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "This financial / important notice is locked. Enter password to view document details (Default PIN: 1234).",
+                        fontSize = 12.sp,
+                        color = Color(0xFF64748B)
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = pinInput,
+                        onValueChange = {
+                            pinInput = it
+                            pinError = false
+                        },
+                        label = { Text("Enter Document Security PIN") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = pinError,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (pinError) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Incorrect password. Access denied.", fontSize = 11.sp, color = Color(0xFFDC2626))
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (pinInput == DocumentAnalysisSession.documentPin || pinInput == "1234") {
+                            DocumentAnalysisSession.isUnlockedForSession = true
+                            pinError = false
+                        } else {
+                            pinError = true
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                ) {
+                    Text("Unlock Document", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onBackClicked() }) {
+                    Text("Cancel", color = Color(0xFF64748B))
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 

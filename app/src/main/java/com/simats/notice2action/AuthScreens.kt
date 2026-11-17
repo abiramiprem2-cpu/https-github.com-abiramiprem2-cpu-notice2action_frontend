@@ -180,14 +180,6 @@ fun OnboardingStep1Screen(
                 ) {
                     Column {
                         Text(
-                            text = "A • WELCOME & AUTHENTICATION",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF94A3B8),
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
                             text = "Notice2Action",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
@@ -223,7 +215,7 @@ fun OnboardingStep1Screen(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "01 / 02 • CAPTURE",
+                            text = "01 / 02",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF4F46E5)
@@ -457,22 +449,12 @@ fun OnboardingStep2Screen(
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "A • WELCOME & AUTHENTICATION",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
-                                letterSpacing = 1.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Notice2Action",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
+                        Text(
+                            text = "Notice2Action",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
                     }
 
                     Text(
@@ -497,7 +479,7 @@ fun OnboardingStep2Screen(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "02 / 02 • TAKE ACTION",
+                            text = "02 / 02",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF4F46E5)
@@ -749,22 +731,12 @@ fun LoginScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "A • WELCOME & AUTHENTICATION",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
-                                letterSpacing = 1.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Welcome back",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
+                        Text(
+                            text = "Welcome back",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
                     }
 
                     Text(text = "🛡️", fontSize = 20.sp)
@@ -985,22 +957,12 @@ fun CreateAccountScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "A • WELCOME & AUTHENTICATION",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
-                                letterSpacing = 1.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Create Workspace Account",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
+                        Text(
+                            text = "Create Workspace Account",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
                     }
 
                     Text(text = "✨", fontSize = 20.sp)
@@ -1235,22 +1197,12 @@ fun ForgotPasswordScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "A • WELCOME & AUTHENTICATION",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8),
-                                letterSpacing = 1.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Forgot Password",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                        }
+                        Text(
+                            text = "Forgot Password",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
                     }
 
                     Text(text = "🔑", fontSize = 20.sp)

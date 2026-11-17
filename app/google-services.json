@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "995726714136",
+    "project_id": "notice2action-2a3c2",
+    "storage_bucket": "notice2action-2a3c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:995726714136:android:96ed3039eb8b26ba832a6d",
+        "android_client_info": {
+          "package_name": "com.simats.notice2action"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtM3UJusn7PzhTNYKu4TE0c1_hxjgTBoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

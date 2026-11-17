@@ -62,13 +62,6 @@ fun YourGroupsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Header
-                Text(
-                    text = "G • GROUPS & COLLABORATION",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B)
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -938,13 +931,6 @@ fun PublishNoticeScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Header
-                Text(
-                    text = "G • GROUPS & COLLABORATION",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B)
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
