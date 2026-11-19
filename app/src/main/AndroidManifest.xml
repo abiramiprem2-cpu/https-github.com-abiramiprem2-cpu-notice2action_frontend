@@ -39,7 +39,7 @@
 
         <receiver
             android:name=".data.AlarmReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.simats.notice2action.REMINDER_ALARM" />
             </intent-filter>

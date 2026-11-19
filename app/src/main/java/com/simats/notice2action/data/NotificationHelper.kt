@@ -10,16 +10,19 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.simats.notice2action.MainActivity
+import com.simats.notice2action.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
 object NotificationHelper {
-    const val CHANNEL_ID = "notice2action_reminders_channel"
+    const val CHANNEL_ID = "notice2action_reminders_v3"
     private const val CHANNEL_NAME = "Notice2Action Reminders"
     private const val CHANNEL_DESC = "Notifications for upcoming task deadlines and notice actions."
 
@@ -47,6 +50,7 @@ object NotificationHelper {
                 }
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setShowBadge(true)
+                enableLights(true)
             }
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -54,11 +58,15 @@ object NotificationHelper {
         }
     }
 
-    fun scheduleTaskReminder(context: Context, reminder: ReminderItemModel) {
+    fun scheduleTaskReminder(
+        context: Context,
+        reminder: ReminderItemModel,
+        explicitTriggerMillis: Long? = null
+    ) {
         if (reminder.status != "active" || !reminder.initialEnabled) return
         createNotificationChannel(context)
 
-        val triggerAtMillis = calculateTriggerMillis(
+        val triggerAtMillis = explicitTriggerMillis ?: calculateTriggerMillis(
             scheduledTime = reminder.scheduledTime,
             deadline = reminder.deadline,
             preset = reminder.timingPreset
@@ -118,9 +126,37 @@ object NotificationHelper {
                 val formatted = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(triggerAtMillis))
                 Toast.makeText(context, "🔔 Reminder set for $formatted", Toast.LENGTH_SHORT).show()
             }
-        } catch (_: Exception) {
+            Log.d("NotificationHelper", "Scheduled reminder '${reminder.title}' at millis=$triggerAtMillis (in ${delaySec}s)")
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "Failed to schedule alarm", e)
             Toast.makeText(context, "🔔 Scheduled: ${reminder.title}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun showImmediateTestNotification(context: Context) {
+        showTaskReminderNotification(
+            context = context,
+            taskTitle = "Immediate Test Alert",
+            scheduledTime = "Just now",
+            sourceDocument = "Notice2Action Test",
+            reminderId = "test_imm_${System.currentTimeMillis()}"
+        )
+    }
+
+    fun scheduleQuickTestReminder(context: Context, seconds: Int = 5) {
+        val targetMillis = System.currentTimeMillis() + (seconds * 1000L)
+        val testItem = ReminderItemModel(
+            id = "test_quick_${System.currentTimeMillis()}",
+            taskId = "test_task_${System.currentTimeMillis()}",
+            title = "Test Reminder Alert",
+            scheduledTime = "In $seconds seconds",
+            deadline = "Immediate Verification",
+            initialEnabled = true,
+            status = "active",
+            sourceDocument = "System Test",
+            timingPreset = "Instant Test"
+        )
+        scheduleTaskReminder(context, testItem, explicitTriggerMillis = targetMillis)
     }
 
     fun showTaskReminderNotification(
@@ -131,6 +167,17 @@ object NotificationHelper {
         reminderId: String = ""
     ) {
         createNotificationChannel(context)
+
+        // Check if notifications are allowed
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            Log.w("NotificationHelper", "Notifications are disabled in system settings!")
+            Toast.makeText(
+                context,
+                "⚠️ Notice2Action notification permission is turned OFF in settings!",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -145,15 +192,16 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("🔔 Task Reminder: $taskTitle")
             .setContentText("$scheduledTime • $sourceDocument")
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "Reminder set for '$taskTitle'. Scheduled at $scheduledTime ($sourceDocument)."
+                    "Reminder set for '$taskTitle'.\nScheduled at: $scheduledTime\nDocument: $sourceDocument"
                 )
             )
             .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
@@ -175,9 +223,14 @@ object NotificationHelper {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notificationId = if (reminderId.isNotBlank()) reminderId.hashCode() else taskTitle.hashCode()
+
         try {
             notificationManager.notify(notificationId, builder.build())
-        } catch (_: Exception) {}
+            Log.d("NotificationHelper", "Notification displayed successfully: id=$notificationId, title=$taskTitle")
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "Error presenting notification", e)
+            Toast.makeText(context, "Error showing notification: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun cancelTaskReminder(context: Context, reminderId: String, taskTitle: String) {
@@ -226,14 +279,15 @@ object NotificationHelper {
         // 1. If preset or scheduled is test mode
         if (scheduledTime.contains("test", ignoreCase = true) ||
             preset.contains("test", ignoreCase = true) ||
-            preset.contains("10s", ignoreCase = true)
+            preset.contains("10s", ignoreCase = true) ||
+            preset.contains("5s", ignoreCase = true)
         ) {
-            return now + 10_000L
+            return now + 5_000L
         }
 
         // 2. Try parsing scheduledTime directly as an absolute datetime
         val directTime = parseDirectDateTime(scheduledTime)
-        if (directTime != null && directTime > now) {
+        if (directTime != null && directTime > (now + 1_000L)) {
             return directTime
         }
 
@@ -271,17 +325,22 @@ object NotificationHelper {
                     cal.set(Calendar.SECOND, 0)
                 }
             }
-            if (cal.timeInMillis > now) {
+            if (cal.timeInMillis > (now + 1_000L)) {
                 return cal.timeInMillis
             }
         }
 
-        // 4. Fallback: if calculated time is in past or unparseable, set to 15 seconds from now so the user can verify
-        return now + 15_000L
+        // 4. Fallback: if calculated time is in past or unparseable, set to 5 seconds from now so the user can verify
+        return now + 5_000L
     }
 
     private fun parseDirectDateTime(raw: String): Long? {
-        val cleaned = raw.replace("•", " ").replace("alert", "").trim()
+        val cleaned = raw
+            .replace("•", " ")
+            .replace("alert", "")
+            .replace(",", " ")
+            .replace("\\s+".toRegex(), " ")
+            .trim()
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 
         val patterns = listOf(
@@ -293,8 +352,10 @@ object NotificationHelper {
             "yyyy-MM-dd",
             "dd/MM/yyyy h:mm a",
             "dd/MM/yyyy",
-            "MMM dd, yyyy h:mm a",
-            "MMM dd, yyyy"
+            "MMM dd yyyy h:mm a",
+            "MMM dd yyyy",
+            "dd MMMM yyyy h:mm a",
+            "dd MMMM yyyy"
         )
 
         for (p in patterns) {
@@ -309,13 +370,34 @@ object NotificationHelper {
         val withYear = "$cleaned $currentYear"
         val patternsWithoutYear = listOf(
             "dd MMM h:mm a yyyy",
-            "dd MMM yyyy"
+            "dd MMM yyyy",
+            "MMM dd h:mm a yyyy",
+            "MMM dd yyyy"
         )
         for (p in patternsWithoutYear) {
             try {
                 val sdf = SimpleDateFormat(p, Locale.US)
                 val d = sdf.parse(withYear)
                 if (d != null) return d.time
+            } catch (_: Exception) {}
+        }
+
+        // Try time-only patterns for today
+        val timeOnlyPatterns = listOf("h:mm a", "hh:mm a", "HH:mm")
+        for (tp in timeOnlyPatterns) {
+            try {
+                val sdf = SimpleDateFormat(tp, Locale.US)
+                val d = sdf.parse(cleaned)
+                if (d != null) {
+                    val parsedCal = Calendar.getInstance().apply { time = d }
+                    val targetCal = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, parsedCal.get(Calendar.HOUR_OF_DAY))
+                        set(Calendar.MINUTE, parsedCal.get(Calendar.MINUTE))
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    return targetCal.timeInMillis
+                }
             } catch (_: Exception) {}
         }
 

@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.platform.LocalContext
 import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.ActionTask
 import com.simats.notice2action.data.ReminderManager
@@ -1567,6 +1568,7 @@ fun TaskDetailsScreen(
 fun EditTaskScreen(
     onBackClicked: () -> Unit
 ) {
+    val context = LocalContext.current
     val existingTask = DocumentAnalysisSession.selectedTask
     var taskTitle by remember { mutableStateOf(existingTask?.title ?: "") }
     var description by remember { mutableStateOf(existingTask?.description ?: "") }
@@ -2003,7 +2005,8 @@ fun EditTaskScreen(
                         title = titleText,
                         deadline = dueDate,
                         scheduled = reminderTime,
-                        source = DocumentAnalysisSession.activeResult?.documentTitle ?: "Custom Task"
+                        source = DocumentAnalysisSession.activeResult?.documentTitle ?: "Custom Task",
+                        context = context
                     )
 
                     onBackClicked()

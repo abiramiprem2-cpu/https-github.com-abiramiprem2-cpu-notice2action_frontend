@@ -2,6 +2,11 @@ package com.simats.notice2action
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Add
 import android.widget.Toast
 import java.util.Calendar
+import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.simats.notice2action.data.ReminderManager
@@ -107,6 +113,54 @@ fun RemindersScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                val areNotificationsEnabled = remember(context) {
+                    NotificationManagerCompat.from(context).areNotificationsEnabled()
+                }
+                if (!areNotificationsEnabled) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    }
+                                } else {
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", context.packageName, null)
+                                    }
+                                }
+                                context.startActivity(intent)
+                            },
+                        color = Color(0xFFFEF2F2),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFFFCA5A5))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "⚠️", fontSize = 20.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Notifications are Disabled",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFDC2626)
+                                )
+                                Text(
+                                    text = "Tap here to enable notifications in settings so your scheduled alerts pop up.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF7F1D1D),
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
                 if (ReminderManager.reminders.isEmpty()) {
                     // Empty Reminders View when no document has been uploaded yet
@@ -389,8 +443,12 @@ fun RemindersScreen(
     }
 
     if (showAddDialog) {
+        val todayStr = remember {
+            val sdf = SimpleDateFormat("dd MMM yyyy • h:mm a", Locale.getDefault())
+            sdf.format(Date(System.currentTimeMillis() + 300_000L))
+        }
         var newTitle by remember { mutableStateOf("") }
-        var newDeadline by remember { mutableStateOf("") }
+        var newDeadline by remember { mutableStateOf(todayStr) }
         var selectedPreset by remember { mutableStateOf("1 day before (9:00 AM)") }
 
         AlertDialog(
@@ -449,24 +507,35 @@ fun RemindersScreen(
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        if (newTitle.isNotBlank()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            NotificationHelper.scheduleQuickTestReminder(context, 5)
+                            showAddDialog = false
+                        },
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(text = "⏱️ Test (5s)", fontSize = 12.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = {
+                            val title = newTitle.ifBlank { "Smart Deadline Reminder" }
+                            val fullDeadline = newDeadline.ifBlank { todayStr }
                             ReminderManager.addCustomReminder(
-                                title = newTitle.trim(),
-                                deadline = newDeadline.trim(),
-                                scheduled = "$selectedPreset alert",
+                                title = title.trim(),
+                                deadline = fullDeadline.trim(),
+                                scheduled = fullDeadline.trim(),
                                 source = "Custom Reminder",
                                 preset = selectedPreset,
                                 context = context
                             )
-                        }
-                        showAddDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(text = "Save Reminder", color = Color.White, fontWeight = FontWeight.Bold)
+                            showAddDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(text = "Save", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
                 }
             },
             dismissButton = {
@@ -636,8 +705,21 @@ fun ReminderSettingsScreen(
     var soundEnabled by remember { mutableStateOf(NotificationHelper.isSoundEnabled) }
     var vibrationEnabled by remember { mutableStateOf(NotificationHelper.isVibrationEnabled) }
 
-    var customDate by remember { mutableStateOf("19 Oct 2026") }
-    var customTime by remember { mutableStateOf("9:00 AM") }
+    val areNotificationsEnabled = remember(context) {
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    val todayCalendar = Calendar.getInstance()
+    val initialDate = remember {
+        SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(todayCalendar.time)
+    }
+    val initialTime = remember {
+        val cal = Calendar.getInstance().apply { add(Calendar.MINUTE, 2) }
+        SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
+    }
+
+    var customDate by remember { mutableStateOf(initialDate) }
+    var customTime by remember { mutableStateOf(initialTime) }
 
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
@@ -710,7 +792,52 @@ fun ReminderSettingsScreen(
                     Text(text = "•••", fontSize = 18.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (!areNotificationsEnabled) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    }
+                                } else {
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", context.packageName, null)
+                                    }
+                                }
+                                context.startActivity(intent)
+                            },
+                        color = Color(0xFFFEF2F2),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFFFCA5A5))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "⚠️", fontSize = 20.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Notifications are Disabled",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFDC2626)
+                                )
+                                Text(
+                                    text = "Tap here to allow notifications in system settings so reminder alerts can pop up.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF7F1D1D),
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
                 // Card 1: Allow Notifications
                 Surface(
@@ -924,6 +1051,37 @@ fun ReminderSettingsScreen(
                     Text(text = "Schedule Custom Reminder", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            NotificationHelper.showImmediateTestNotification(context)
+                        },
+                        modifier = Modifier.weight(1f).height(40.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        Text(text = "⚡ Test Now", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+
+                    Button(
+                        onClick = {
+                            NotificationHelper.scheduleQuickTestReminder(context, 5)
+                        },
+                        modifier = Modifier.weight(1f).height(40.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        Text(text = "⏱️ Test in 5s", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Box(
@@ -932,7 +1090,7 @@ fun ReminderSettingsScreen(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "USER-SELECTED REMINDER • LOCAL TIME",
+                        text = "EXACT LOCAL TIME • INSTANT ALARM & SYSTEM NOTIFICATION",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF2563EB)
@@ -1061,7 +1219,13 @@ fun ReminderSettingsScreen(
 
             // Save Settings Button
             Button(
-                onClick = { onBackClicked() },
+                onClick = {
+                    NotificationHelper.isSoundEnabled = soundEnabled
+                    NotificationHelper.isVibrationEnabled = vibrationEnabled
+                    NotificationHelper.createNotificationChannel(context)
+                    Toast.makeText(context, "Notification settings updated!", Toast.LENGTH_SHORT).show()
+                    onBackClicked()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

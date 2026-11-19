@@ -2372,11 +2372,11 @@ fun NoticeDetailsScreen(
                                             modifier = Modifier.clickable {
                                                 if (isReminderActive) {
                                                     val existing = ReminderManager.reminders.find { it.title.equals(action.title, true) }
-                                                    if (existing != null) ReminderManager.toggleReminder(existing.id)
+                                                    if (existing != null) ReminderManager.toggleReminder(existing.id, context)
                                                     isReminderActive = false
                                                     Toast.makeText(context, "Reminder paused for this task", Toast.LENGTH_SHORT).show()
                                                 } else {
-                                                    ReminderManager.addFromActionTask(action, analysis.documentTitle, "1 day before (9:00 AM)")
+                                                    ReminderManager.addFromActionTask(action, analysis.documentTitle, "1 day before (9:00 AM)", context = context)
                                                     isReminderActive = true
                                                     Toast.makeText(context, "â° Smart Reminder set: 1 day before (${action.dateTime})", Toast.LENGTH_SHORT).show()
                                                 }

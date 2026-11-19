@@ -44,3 +44,4 @@ class NoticeFirebaseMessagingService : FirebaseMessagingService() {
         )
     }
 }
+
