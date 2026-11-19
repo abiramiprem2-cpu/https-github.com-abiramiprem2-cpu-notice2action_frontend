@@ -48,6 +48,10 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1506,7 +1510,7 @@ fun DocumentPreviewScreen(
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "$documentSize â€¢ Ready for AI extraction",
+                                        text = "$documentSize • Ready for AI extraction",
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -1811,7 +1815,7 @@ fun NoticeScanningScreen(
 
             // Bottom subtle indicator
             Text(
-                text = "Notice2Action AI Engine â€¢ Powered by Google ML Kit",
+                text = "Notice2Action AI Engine • Powered by Google ML Kit",
                 fontSize = 11.sp,
                 color = Color(0xFF94A3B8),
                 textAlign = TextAlign.Center,
@@ -1868,13 +1872,13 @@ fun NoticeDetailsScreen(
         val lq = q.lowercase()
         isAnswering = true
         aiAnswer = when {
-            lq.contains("deadline") || lq.contains("due") || lq.contains("when") || lq.contains("date") || lq.contains("à®•à®Ÿà¯ˆà®šà®¿") ->
+            lq.contains("deadline") || lq.contains("due") || lq.contains("when") || lq.contains("date") || lq.contains("கடைசி") ->
                 "The primary cut-off deadline for this notice is ${analysis.primaryDeadline} (${analysis.daysRemaining}). Please complete submissions before this date."
-            lq.contains("task") || lq.contains("do") || lq.contains("action") || lq.contains("checklist") || lq.contains("à®Žà®©à¯à®©") ->
+            lq.contains("task") || lq.contains("do") || lq.contains("action") || lq.contains("checklist") || lq.contains("என்ன") ->
                 "The required tasks identified from this notice are: ${analysis.actions.joinToString("; ") { it.title }}."
             lq.contains("authority") || lq.contains("who") || lq.contains("issued") || lq.contains("office") ->
                 "This notice was issued by ${analysis.issuingAuthority} under official reference code ${analysis.referenceNumber}."
-            lq.contains("fee") || lq.contains("pay") || lq.contains("amount") || lq.contains("penalty") || lq.contains("à®•à®Ÿà¯à®Ÿà®£à®®à¯") ->
+            lq.contains("fee") || lq.contains("pay") || lq.contains("amount") || lq.contains("penalty") || lq.contains("கட்டணம்") ->
                 if (analysis.category.contains("Fee")) "Online fee payments must be settled through the university/official portal before ${analysis.primaryDeadline} to avoid late fines."
                 else "This notice does not require fee payment. It is an official announcement from ${analysis.issuingAuthority}."
             else ->
@@ -2055,13 +2059,13 @@ fun NoticeDetailsScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = if (explanationLang == "ta") "à®‡à®¨à¯à®¤ à®†à®µà®£à®®à¯ à®Žà®¤à¯ˆà®ªà¯ à®ªà®±à¯à®±à®¿à®¯à®¤à¯?" else AppStrings.get("qa_what_about"),
+                                        text = if (explanationLang == "ta") "இந்த ஆவணம் எதைப் பற்றியது?" else AppStrings.get("qa_what_about"),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = if (explanationLang == "ta") "à®Žà®³à®¿à®¯ à®šà¯Šà®±à¯à®•à®³à®¿à®²à¯ AI à®µà®¿à®³à®•à¯à®•à®®à¯" else AppStrings.get("qa_what_about_sub"),
+                                        text = if (explanationLang == "ta") "இந்த ஆவணம் எதைப் பற்றியது?" else AppStrings.get("qa_what_about"),
                                         fontSize = 11.sp,
                                         color = Color(0xFF2563EB),
                                         fontWeight = FontWeight.Medium
@@ -2069,7 +2073,7 @@ fun NoticeDetailsScreen(
                                 }
                             }
 
-                            // Bilingual Language Switcher [ EN | à®¤à®®à®¿à®´à¯ ]
+                            // Bilingual Language Switcher [ EN | தமிழ் ]
                             Surface(
                                 color = Color(0xFFF1F5F9),
                                 shape = RoundedCornerShape(20.dp),
@@ -2102,7 +2106,7 @@ fun NoticeDetailsScreen(
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = "à®¤à®®à®¿à®´à¯",
+                                            text = "தமிழ்",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (explanationLang == "ta") Color.White else Color(0xFF64748B)
@@ -2212,13 +2216,13 @@ fun NoticeDetailsScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = if (explanationLang == "ta") "à®¨à®¾à®©à¯ à®Žà®©à¯à®© à®šà¯†à®¯à¯à®¯ à®µà¯‡à®£à¯à®Ÿà¯à®®à¯?" else AppStrings.get("qa_what_to_do"),
+                                        text = if (explanationLang == "ta") "நான் என்ன செய்ய வேண்டும்?" else AppStrings.get("qa_what_to_do"),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = if (explanationLang == "ta") "à®¤à¯‡à®µà¯ˆà®¯à®¾à®© à®ªà®£à®¿à®•à®³à¯ & à®šà®°à®¿à®ªà®¾à®°à¯à®ªà¯à®ªà¯à®ªà¯ à®ªà®Ÿà¯à®Ÿà®¿à®¯à®²à¯" else AppStrings.get("qa_what_to_do_sub"),
+                                        text = if (explanationLang == "ta") "தேவையான பணிகள் & சரிபார்ப்புப் பட்டியல்" else AppStrings.get("qa_what_to_do_sub"),
                                         fontSize = 11.sp,
                                         color = Color(0xFF059669),
                                         fontWeight = FontWeight.Medium
@@ -2347,7 +2351,7 @@ fun NoticeDetailsScreen(
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
                                                 Text(
-                                                    text = "ðŸ“Œ Detected in Notice: ${action.quote}",
+                                                    text = "📌 Detected in Notice: ${action.quote}",
                                                     fontSize = 10.sp,
                                                     fontWeight = FontWeight.Medium,
                                                     color = Color(0xFF854D0E),
@@ -2378,7 +2382,7 @@ fun NoticeDetailsScreen(
                                                 } else {
                                                     ReminderManager.addFromActionTask(action, analysis.documentTitle, "1 day before (9:00 AM)", context = context)
                                                     isReminderActive = true
-                                                    Toast.makeText(context, "â° Smart Reminder set: 1 day before (${action.dateTime})", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, "⏰ Smart Reminder set: 1 day before (${action.dateTime})", Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         ) {
@@ -2444,13 +2448,13 @@ fun NoticeDetailsScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = if (explanationLang == "ta") "à®¨à®¾à®©à¯ à®Žà®ªà¯à®ªà¯‹à®¤à¯ à®µà®°à¯ˆ à®šà¯†à®¯à¯à®¯ à®µà¯‡à®£à¯à®Ÿà¯à®®à¯?" else AppStrings.get("qa_by_when"),
+                                        text = if (explanationLang == "ta") "நான் எப்போது வரை செய்ய வேண்டும்?" else AppStrings.get("qa_by_when"),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = if (explanationLang == "ta") "à®®à¯à®•à¯à®•à®¿à®¯ à®•à®¾à®²à®•à¯à®•à¯†à®Ÿà¯ à®®à®±à¯à®±à¯à®®à¯ à®¤à¯‡à®¤à®¿à®•à®³à¯" else AppStrings.get("qa_by_when_sub"),
+                                        text = if (explanationLang == "ta") "முக்கிய காலக்கெடு மற்றும் தேதிகள்" else AppStrings.get("qa_by_when_sub"),
                                         fontSize = 11.sp,
                                         color = Color(0xFFD97706),
                                         fontWeight = FontWeight.Medium
@@ -2677,7 +2681,7 @@ fun NoticeDetailsScreen(
                                 border = BorderStroke(1.dp, Color(0xFFE9D5FF))
                             ) {
                                 Row(modifier = Modifier.padding(12.dp)) {
-                                    Text(text = "ðŸ’¡", fontSize = 15.sp)
+                                    Icon(Icons.Default.Lightbulb, contentDescription = "AI Tip", tint = Color(0xFF9333EA), modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = aiAnswer!!,
@@ -2882,7 +2886,7 @@ fun MyDocumentsScreen(
                                 .background(Color(0xFFEEF2FF), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "📄", fontSize = 36.sp)
+                            Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(36.dp))
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -3114,7 +3118,11 @@ fun DocumentDetailsScreen(
             onDismissRequest = { },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🔒 Document Protection Lock", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Lock, contentDescription = "Lock", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Document Protection Lock", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                    }
                 }
             },
             text = {
@@ -3258,7 +3266,7 @@ fun ShareNoticeScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "🔗", fontSize = 24.sp)
+                    Icon(Icons.Default.Link, contentDescription = "Link", tint = Color(0xFF2563EB), modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = "Copy Notice Link", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
@@ -3277,7 +3285,11 @@ fun ShareNoticeScreen(
                         .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "✓ $shareFeedback", color = Color(0xFF16A34A), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = shareFeedback ?: "", color = Color(0xFF16A34A), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

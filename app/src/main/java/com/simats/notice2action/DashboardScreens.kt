@@ -222,7 +222,7 @@ fun DashboardScreen(
                                     .background(Color.White.copy(alpha = 0.2f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "🎙️", fontSize = 20.sp)
+                                Icon(Icons.Default.Mic, contentDescription = "Voice", tint = Color.White, modifier = Modifier.size(20.dp))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
@@ -530,7 +530,7 @@ fun DashboardScreen(
                                     .background(Color(0xFFEFF6FF), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "📅", fontSize = 18.sp)
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
@@ -577,7 +577,7 @@ fun DashboardScreen(
                                         .background(Color(0xFFDBEAFE), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "📅", fontSize = 18.sp)
+                                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import com.simats.notice2action.data.NotificationHelper
+import com.simats.notice2action.data.AppStrings
 
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
@@ -82,7 +83,7 @@ fun RemindersScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Reminders",
+                        text = AppStrings.get("rem_title"),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
@@ -99,15 +100,17 @@ fun RemindersScreen(
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = "Add", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(text = AppStrings.get("rem_add"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "⚙",
-                            fontSize = 20.sp,
-                            color = Color(0xFF2563EB),
-                            modifier = Modifier.clickable { onSettingsClicked() }
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clickable { onSettingsClicked() }
                         )
                     }
                 }
@@ -176,13 +179,13 @@ fun RemindersScreen(
                                 .background(Color(0xFFEEF2FF), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "🔔", fontSize = 36.sp)
+                            Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(36.dp))
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "No Reminders Found",
+                            text = AppStrings.get("rem_empty_title"),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A),
@@ -192,7 +195,7 @@ fun RemindersScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "Your reminder list is empty. Upload or scan a notice document to automatically extract and schedule smart deadline reminders.",
+                            text = AppStrings.get("rem_empty_desc"),
                             fontSize = 13.sp,
                             color = Color(0xFF64748B),
                             textAlign = TextAlign.Center,
@@ -260,7 +263,7 @@ fun RemindersScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Upcoming",
+                                text = AppStrings.get("rem_tab_upcoming"),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (selectedTab == "Upcoming") Color(0xFF2563EB) else Color(0xFF64748B)
@@ -283,7 +286,7 @@ fun RemindersScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Past",
+                                text = AppStrings.get("rem_tab_past"),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = if (selectedTab == "Past") Color(0xFF2563EB) else Color(0xFF64748B)
@@ -311,7 +314,7 @@ fun RemindersScreen(
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "October 2026",
+                                text = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date()),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF2563EB)
@@ -366,10 +369,10 @@ fun RemindersScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "âš²", fontSize = 16.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Reminder Settings",
+                            text = AppStrings.get("rem_settings"),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2563EB)
@@ -581,7 +584,7 @@ fun ReminderCard(
                             .background(if (item.initialEnabled) Color(0xFFEEF2FF) else Color(0xFFF1F5F9), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "ðŸ””", fontSize = 16.sp)
+                        Icon(Icons.Default.Notifications, contentDescription = null, tint = if (item.initialEnabled) Color(0xFF2563EB) else Color(0xFF94A3B8), modifier = Modifier.size(18.dp))
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
@@ -617,7 +620,7 @@ fun ReminderCard(
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
-                        text = "ðŸ“„ ${item.sourceDocument}",
+                        text = item.sourceDocument,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF2563EB),
@@ -629,13 +632,19 @@ fun ReminderCard(
                     color = Color(0xFFFEF3C7),
                     shape = RoundedCornerShape(6.dp)
                 ) {
-                    Text(
-                        text = "â° ${item.timingPreset}",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB45309),
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                    ) {
+                        Icon(Icons.Default.Schedule, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = item.timingPreset,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFB45309)
+                        )
+                    }
                 }
             }
 
@@ -688,9 +697,9 @@ fun ReminderCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "âœï¸", fontSize = 14.sp, color = Color(0xFF2563EB), modifier = Modifier.clickable { onEdit() })
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp).clickable { onEdit() })
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = "ðŸ—‘ï¸", fontSize = 14.sp, color = Color(0xFFEF4444), modifier = Modifier.clickable { onDelete() })
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp).clickable { onDelete() })
                 }
             }
         }
@@ -779,17 +788,17 @@ fun ReminderSettingsScreen(
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF4F46E5), modifier = Modifier.size(20.dp))
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Reminder settings",
+                            text = AppStrings.get("rem_settings"),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
                         )
                     }
-                    Text(text = "•••", fontSize = 18.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.MoreVert, contentDescription = "More", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -854,11 +863,11 @@ fun ReminderSettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🔔", fontSize = 20.sp, color = Color(0xFF2563EB))
+                            Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Allow notifications",
+                                    text = AppStrings.get("rem_allow_notif"),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0F172A)
@@ -928,7 +937,7 @@ fun ReminderSettingsScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (isChecked) {
-                                        Text(text = "✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -1048,7 +1057,7 @@ fun ReminderSettingsScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text(text = "Schedule Custom Reminder", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = AppStrings.get("rem_custom_reminder"), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1066,7 +1075,7 @@ fun ReminderSettingsScreen(
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        Text(text = "⚡ Test Now", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = AppStrings.get("rem_test_now"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
 
                     Button(
@@ -1078,7 +1087,7 @@ fun ReminderSettingsScreen(
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        Text(text = "⏱️ Test in 5s", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = AppStrings.get("rem_test_5s"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
 
@@ -1167,7 +1176,7 @@ fun ReminderSettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Vibration",
+                                    text = AppStrings.get("rem_vibration"),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0F172A)
@@ -1203,7 +1212,7 @@ fun ReminderSettingsScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "ℹ️", fontSize = 16.sp)
+                        Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Reminder: 19 Oct, 9:00 AM. Extracted deadline: 20 Oct, 5:00 PM. These are separate.",
@@ -1233,10 +1242,10 @@ fun ReminderSettingsScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "✓", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Save Settings",
+                        text = AppStrings.get("rem_save_settings"),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White

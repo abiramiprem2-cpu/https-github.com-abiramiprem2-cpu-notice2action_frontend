@@ -1,6 +1,10 @@
 package com.simats.notice2action
 
 import com.simats.notice2action.data.DocumentAnalysisSession
+import com.simats.notice2action.data.AppStrings
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Notifications
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,10 +57,10 @@ fun CalendarScreen(
                         .clickable { onBackClicked() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "←", fontSize = 18.sp, color = Color(0xFF3B82F6), fontWeight = FontWeight.Bold)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF3B82F6), modifier = Modifier.size(20.dp))
                 }
                 Text(
-                    text = "Calendar",
+                    text = AppStrings.get("dash_calendar"),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E293B)
@@ -68,7 +72,7 @@ fun CalendarScreen(
                         .shadow(1.dp, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "🔔", fontSize = 18.sp, color = Color(0xFF64748B))
+                    Icon(Icons.Default.Notifications, contentDescription = "Reminders", tint = Color(0xFF64748B), modifier = Modifier.size(20.dp))
                 }
             }
 

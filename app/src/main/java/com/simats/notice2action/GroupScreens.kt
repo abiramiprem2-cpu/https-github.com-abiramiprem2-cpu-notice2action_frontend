@@ -10,6 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -84,7 +87,7 @@ fun YourGroupsScreen(
                             color = Color(0xFF1E293B)
                         )
                     }
-                    Text(text = "👥", fontSize = 20.sp, color = Color(0xFF2563EB))
+                    Icon(Icons.Default.Groups, contentDescription = "Groups", tint = Color(0xFF2563EB), modifier = Modifier.size(24.dp))
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -128,7 +131,7 @@ fun YourGroupsScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "👤+", fontSize = 16.sp, color = Color(0xFF2563EB))
+                            Icon(Icons.Default.PersonAdd, contentDescription = "Join", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = "Join Group", fontSize = 14.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
                         }
@@ -206,7 +209,7 @@ fun YourGroupsScreen(
                                         .background(Color(0xFFEFF6FF), RoundedCornerShape(10.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "📄", fontSize = 20.sp)
+                                    Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
@@ -439,7 +442,7 @@ fun GroupDetailsScreen(
                                 .clickable { showDeleteGroupDialog = true }
                                 .padding(end = 12.dp)
                         )
-                        Text(text = "⚙️", fontSize = 20.sp, color = Color(0xFF2563EB))
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -501,7 +504,7 @@ fun GroupDetailsScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "👤+", fontSize = 14.sp, color = Color(0xFF2563EB))
+                            Icon(Icons.Default.PersonAdd, contentDescription = "Invite", tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = "Invite Member", fontSize = 13.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
                         }
@@ -686,7 +689,7 @@ fun GroupDetailsScreen(
                                         .background(Color(0xFFEFF6FF), RoundedCornerShape(10.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "📄", fontSize = 20.sp)
+                                    Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
@@ -841,7 +844,7 @@ fun GroupDetailsScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🗑️", fontSize = 14.sp, color = Color(0xFFEF4444))
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(text = "Delete Group", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
                     }
@@ -860,7 +863,7 @@ fun GroupDetailsScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "📄", fontSize = 16.sp, color = Color.White)
+                    Icon(Icons.Default.Description, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Publish Notice",
@@ -953,7 +956,7 @@ fun PublishNoticeScreen(
                             color = Color(0xFF1E293B)
                         )
                     }
-                    Text(text = "•••", fontSize = 18.sp, color = Color(0xFF3B82F6), fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.MoreVert, contentDescription = "More", tint = Color(0xFF3B82F6), modifier = Modifier.size(20.dp))
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -1055,7 +1058,7 @@ fun PublishNoticeScreen(
                                     .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "📄", fontSize = 18.sp)
+                                Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
@@ -1074,7 +1077,7 @@ fun PublishNoticeScreen(
                             }
                         }
 
-                        Text(text = "📄", fontSize = 16.sp, color = Color(0xFF2563EB))
+                        Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
                     }
                 }
 
@@ -1140,7 +1143,7 @@ fun PublishNoticeScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(text = "20 Oct • 5:00 PM", fontSize = 12.sp, color = Color(0xFF334155))
-                                Text(text = "📅", fontSize = 14.sp)
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(14.dp))
                             }
                         }
                     }
@@ -1184,7 +1187,7 @@ fun PublishNoticeScreen(
                             .background(Color(0xFF2563EB), RoundedCornerShape(4.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
@@ -1244,7 +1247,7 @@ fun PublishNoticeScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "👁️", fontSize = 14.sp)
+                        Icon(Icons.Default.Visibility, contentDescription = "Preview", tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(text = "Preview", fontSize = 13.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
                     }
@@ -1261,7 +1264,7 @@ fun PublishNoticeScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🚀", fontSize = 14.sp, color = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Publish", tint = Color.White, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(text = "Publish - Demo", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
                     }

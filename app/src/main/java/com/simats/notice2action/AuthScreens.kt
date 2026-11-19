@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -739,7 +741,7 @@ fun LoginScreen(
                         )
                     }
 
-                    Text(text = "🛡️", fontSize = 20.sp)
+                    Icon(Icons.Default.Security, contentDescription = "Security", tint = Color(0xFF2563EB), modifier = Modifier.size(22.dp))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -778,7 +780,7 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text(text = "your.email@example.com", color = Color(0xFF94A3B8), fontSize = 14.sp) },
-                    trailingIcon = { Text(text = "✉️", fontSize = 16.sp) },
+                    trailingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
@@ -807,7 +809,7 @@ fun LoginScreen(
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text(text = "Enter your password", color = Color(0xFF94A3B8), fontSize = 14.sp) },
                     visualTransformation = PasswordVisualTransformation(),
-                    trailingIcon = { Text(text = "🔒", fontSize = 16.sp) },
+                    trailingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
@@ -986,7 +988,7 @@ fun CreateAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text(text = "Your full name", color = Color(0xFF94A3B8), fontSize = 14.sp) },
-                    trailingIcon = { Text(text = "👤", fontSize = 16.sp) },
+                    trailingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
@@ -1014,7 +1016,7 @@ fun CreateAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text(text = "your.email@example.com", color = Color(0xFF94A3B8), fontSize = 14.sp) },
-                    trailingIcon = { Text(text = "✉️", fontSize = 16.sp) },
+                    trailingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
@@ -1043,7 +1045,7 @@ fun CreateAccountScreen(
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text(text = "Create password (min. 6 characters)", color = Color(0xFF94A3B8), fontSize = 14.sp) },
                     visualTransformation = PasswordVisualTransformation(),
-                    trailingIcon = { Text(text = "🔒", fontSize = 16.sp) },
+                    trailingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
@@ -1205,7 +1207,7 @@ fun ForgotPasswordScreen(
                         )
                     }
 
-                    Text(text = "🔑", fontSize = 20.sp)
+                    Icon(Icons.Default.VpnKey, contentDescription = "Key", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -1242,7 +1244,7 @@ fun ForgotPasswordScreen(
                             modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "✓", fontSize = 20.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
@@ -1281,7 +1283,7 @@ fun ForgotPasswordScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        trailingIcon = { Text(text = "✉️", fontSize = 16.sp) },
+                        trailingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF2563EB),
@@ -1307,7 +1309,7 @@ fun ForgotPasswordScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         visualTransformation = PasswordVisualTransformation(),
-                        trailingIcon = { Text(text = "🔒", fontSize = 16.sp) },
+                        trailingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF2563EB),
@@ -1335,7 +1337,7 @@ fun ForgotPasswordScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         visualTransformation = PasswordVisualTransformation(),
-                        trailingIcon = { Text(text = "🔒", fontSize = 16.sp) },
+                        trailingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF2563EB),
@@ -1436,7 +1438,7 @@ fun ForgotPasswordScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "✓", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Done • Return to Login",

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.platform.LocalContext
 import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.ActionTask
+import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.ReminderManager
 import java.util.Locale
 import java.util.UUID
@@ -202,7 +204,7 @@ fun ReviewSuggestedActionsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(text = "🔒", fontSize = 22.sp)
+                            Icon(Icons.Default.Lock, contentDescription = "Lock", tint = Color(0xFF2563EB), modifier = Modifier.size(22.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
@@ -687,7 +689,7 @@ fun MyTasksScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "My Tasks",
+                        text = AppStrings.get("tasks_title"),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
@@ -711,13 +713,13 @@ fun MyTasksScreen(
                                 .background(Color(0xFFEEF2FF), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "📋", fontSize = 36.sp)
+                            Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(36.dp))
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "No Tasks Available",
+                            text = AppStrings.get("tasks_empty_title"),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A),
@@ -727,7 +729,7 @@ fun MyTasksScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "Your task list is empty. Upload or scan a notice document to automatically extract your tasks and deadlines.",
+                            text = AppStrings.get("tasks_empty_desc"),
                             fontSize = 13.sp,
                             color = Color(0xFF64748B),
                             textAlign = TextAlign.Center,
@@ -813,7 +815,7 @@ fun MyTasksScreen(
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "🔍", fontSize = 16.sp, color = Color(0xFF94A3B8))
+                            Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             BasicTextField(
                                 value = searchQuery,
@@ -1057,7 +1059,11 @@ fun TaskCardItem(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "📅 $date", fontSize = 11.sp, color = Color(0xFF334155))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(12.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = date, fontSize = 11.sp, color = Color(0xFF334155))
+                        }
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
@@ -1119,17 +1125,17 @@ fun TaskDetailsScreen(
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF4F46E5), modifier = Modifier.size(20.dp))
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Task details",
+                            text = AppStrings.get("tasks_task_details"),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
                         )
                     }
-                    Text(text = "•••", fontSize = 18.sp, color = Color(0xFF3B82F6), fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.MoreVert, contentDescription = "More", tint = Color(0xFF3B82F6), modifier = Modifier.size(20.dp))
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -1148,7 +1154,7 @@ fun TaskDetailsScreen(
                                 .background(Color(0xFFEEF2FF), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "📋", fontSize = 36.sp)
+                            Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(36.dp))
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -1264,7 +1270,7 @@ fun TaskDetailsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = "📅", fontSize = 20.sp)
+                                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
@@ -1299,7 +1305,7 @@ fun TaskDetailsScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🔔", fontSize = 20.sp)
+                                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
@@ -1403,7 +1409,7 @@ fun TaskDetailsScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         if (isChecked) {
-                                            Text(text = "✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                                         }
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -1441,7 +1447,7 @@ fun TaskDetailsScreen(
                                         .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "📄", fontSize = 20.sp)
+                                    Icon(Icons.Default.Description, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
@@ -1482,7 +1488,11 @@ fun TaskDetailsScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF2FF)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(text = "✏️ Edit", fontSize = 13.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = "Edit", fontSize = 13.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
@@ -1495,7 +1505,11 @@ fun TaskDetailsScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEF2F2)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(text = "🗑️ Delete", fontSize = 13.sp, color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = "Delete", fontSize = 13.sp, color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -1515,10 +1529,10 @@ fun TaskDetailsScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "✓", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Mark as Completed",
+                            text = AppStrings.get("tasks_mark_completed"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -1624,23 +1638,24 @@ fun EditTaskScreen(
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "←", fontSize = 18.sp, color = Color(0xFF4F46E5), fontWeight = FontWeight.Bold)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF4F46E5), modifier = Modifier.size(20.dp))
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = if (existingTask != null) "Edit task" else "Create Task",
+                            text = if (existingTask != null) AppStrings.get("tasks_edit_task") else AppStrings.get("tasks_create_task"),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
                         )
                     }
 
-                    Text(
-                        text = "✕",
-                        fontSize = 18.sp,
-                        color = Color(0xFF2563EB),
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onBackClicked() }
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clickable { onBackClicked() }
                     )
                 }
 
@@ -1757,7 +1772,7 @@ fun EditTaskScreen(
                                 color = Color(0xFF2563EB)
                             )
                         }
-                        Text(text = "📅", fontSize = 20.sp)
+                        Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -1962,7 +1977,7 @@ fun EditTaskScreen(
                                 color = Color(0xFF2563EB)
                             )
                         }
-                        Text(text = "🔔", fontSize = 20.sp)
+                        Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -2018,10 +2033,10 @@ fun EditTaskScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "✓", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Save Task",
+                        text = AppStrings.get("tasks_save_task"),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White

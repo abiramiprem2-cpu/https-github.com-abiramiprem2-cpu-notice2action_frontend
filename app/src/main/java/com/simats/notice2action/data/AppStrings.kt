@@ -104,7 +104,38 @@ object AppStrings {
         "qa_copy_text" to "Copy Text",
         "qa_review_actions" to "Review & Confirm Actions",
         "qa_tasks_identified" to "Tasks Identified",
-        "qa_primary_deadline" to "Primary Due Date"
+        "qa_primary_deadline" to "Primary Due Date",
+
+        // Reminders Screen
+        "rem_title" to "Reminders",
+        "rem_settings" to "Reminder Settings",
+        "rem_add" to "Add",
+        "rem_empty_title" to "No Reminders Found",
+        "rem_empty_desc" to "Your reminder list is empty. Upload or scan a notice document to automatically extract and schedule smart deadline reminders.",
+        "rem_tab_upcoming" to "Upcoming",
+        "rem_tab_past" to "Past",
+        "rem_allow_notif" to "Allow notifications",
+        "rem_allow_notif_sub" to "Receive deadline alerts & updates",
+        "rem_sound" to "Sound",
+        "rem_vibration" to "Vibration",
+        "rem_custom_reminder" to "Schedule Custom Reminder",
+        "rem_test_now" to "⚡ Test Now",
+        "rem_test_5s" to "⏱️ Test in 5s",
+        "rem_save_settings" to "Save Settings",
+
+        // Tasks Screen
+        "tasks_title" to "My Tasks",
+        "tasks_empty_title" to "No Tasks Available",
+        "tasks_empty_desc" to "Your task list is empty. Upload or scan a notice document to automatically extract your tasks and deadlines.",
+        "tasks_search_placeholder" to "Search tasks or notices...",
+        "tasks_tab_all" to "All",
+        "tasks_tab_pending" to "Pending",
+        "tasks_tab_completed" to "Completed",
+        "tasks_create_task" to "Create Task",
+        "tasks_edit_task" to "Edit Task",
+        "tasks_task_details" to "Task Details",
+        "tasks_mark_completed" to "Mark as Completed",
+        "tasks_save_task" to "Save Task"
     )
 
     // Tamil (தமிழ்)
@@ -210,7 +241,38 @@ object AppStrings {
         "qa_copy_text" to "உரையை நகலெடு",
         "qa_review_actions" to "செயல்களை மதிப்பாய்வு செய்க",
         "qa_tasks_identified" to "பணிகள் கண்டறியப்பட்டன",
-        "qa_primary_deadline" to "முக்கிய கடைசி தேதி"
+        "qa_primary_deadline" to "முக்கிய கடைசி தேதி",
+
+        // Reminders Screen
+        "rem_title" to "நினைவூட்டல்கள்",
+        "rem_settings" to "நினைவூட்டல் அமைப்புகள்",
+        "rem_add" to "சேர்",
+        "rem_empty_title" to "நினைவூட்டல்கள் எதுவும் இல்லை",
+        "rem_empty_desc" to "உங்கள் நினைவூட்டல் பட்டியல் காலியாக உள்ளது. ஆவணத்தை ஸ்கேன் செய்து காலக்கெடு நினைவூட்டல்களை திட்டமிடுங்கள்.",
+        "rem_tab_upcoming" to "வரவிருப்பவை",
+        "rem_tab_past" to "முடிந்தவை",
+        "rem_allow_notif" to "அறிவிப்புகளை அனுமதி",
+        "rem_allow_notif_sub" to "காலக்கெடு எச்சரிக்கைகள் மற்றும் புதுப்பிப்புகளைப் பெறுங்கள்",
+        "rem_sound" to "ஒலி",
+        "rem_vibration" to "அதிர்வு",
+        "rem_custom_reminder" to "தனிப்பயன் நினைவூட்டல்",
+        "rem_test_now" to "⚡ இப்போதே சோதி",
+        "rem_test_5s" to "⏱️ 5 நொடியில் சோதி",
+        "rem_save_settings" to "அமைப்புகளைச் சேமி",
+
+        // Tasks Screen
+        "tasks_title" to "எனது பணிகள்",
+        "tasks_empty_title" to "பணிகள் எதுவும் இல்லை",
+        "tasks_empty_desc" to "உங்கள் பணி பட்டியல் காலியாக உள்ளது. ஆவணத்தை ஸ்கேன் செய்து பணிகள் மற்றும் காலக்கெடுவைப் பெறுங்கள்.",
+        "tasks_search_placeholder" to "பணிகள் அல்லது அறிவிப்புகளைத் தேடுங்கள்...",
+        "tasks_tab_all" to "அனைத்தும்",
+        "tasks_tab_pending" to "நிலுவையில்",
+        "tasks_tab_completed" to "முடிந்தவை",
+        "tasks_create_task" to "பணியை உருவாக்கு",
+        "tasks_edit_task" to "பணியைத் திருத்து",
+        "tasks_task_details" to "பணி விவரங்கள்",
+        "tasks_mark_completed" to "முடிந்தது எனக் குறிக்கவும்",
+        "tasks_save_task" to "பணியைச் சேமி"
     )
 
     // Malayalam (മലയാളം)
@@ -316,7 +378,38 @@ object AppStrings {
         "qa_copy_text" to "വാചകം പകർത്തുക",
         "qa_review_actions" to "നടപടികൾ അവലോകനം ചെയ്യുക",
         "qa_tasks_identified" to "ജോലികൾ കണ്ടെത്തി",
-        "qa_primary_deadline" to "പ്രധാന അവസാന തീയതി"
+        "qa_primary_deadline" to "പ്രധാന അവസാന തീയതി",
+
+        // Reminders Screen
+        "rem_title" to "ഓർമ്മപ്പെടുത്തലുകൾ",
+        "rem_settings" to "ഓർമ്മപ്പെടുത്തൽ ക്രമീകരണങ്ങൾ",
+        "rem_add" to "ചേർക്കുക",
+        "rem_empty_title" to "ഓർമ്മപ്പെടുത്തലുകൾ ഒന്നും കണ്ടെത്തിയില്ല",
+        "rem_empty_desc" to "നിങ്ങളുടെ ഓർമ്മപ്പെടുത്തൽ ലിസ്റ്റ് ശൂന്യമാണ്. നോട്ടീസ് രേഖ അപ്‌ലോഡ് ചെയ്യുക.",
+        "rem_tab_upcoming" to "വരാനിരിക്കുന്നവ",
+        "rem_tab_past" to "കഴിഞ്ഞവ",
+        "rem_allow_notif" to "അറിയിപ്പുകൾ അനുവദിക്കുക",
+        "rem_allow_notif_sub" to "സമയപരിധി അലേർട്ടുകൾ സ്വീകരിക്കുക",
+        "rem_sound" to "ശബ്ദം",
+        "rem_vibration" to "വൈബ്രേഷൻ",
+        "rem_custom_reminder" to "കസ്റ്റം ഓർമ്മപ്പെടുത്തൽ",
+        "rem_test_now" to "⚡ ഇപ്പോൾ പരീക്ഷിക്കുക",
+        "rem_test_5s" to "⏱️ 5 സെക്കൻഡിൽ",
+        "rem_save_settings" to "ക്രമീകരണങ്ങൾ സംരക്ഷിക്കുക",
+
+        // Tasks Screen
+        "tasks_title" to "എന്റെ ജോലികൾ",
+        "tasks_empty_title" to "ജോലികളൊന്നും ലഭ്യമല്ല",
+        "tasks_empty_desc" to "നിങ്ങളുടെ ജോലികളുടെ ലിസ്റ്റ് ശൂന്യമാണ്. നോട്ടീസ് രേഖ സ്കാൻ ചെയ്യുക.",
+        "tasks_search_placeholder" to "ജോലികളോ നോട്ടീസുകളോ തിരയുക...",
+        "tasks_tab_all" to "എല്ലാം",
+        "tasks_tab_pending" to "തീർപ്പുകൽപ്പിക്കാത്തവ",
+        "tasks_tab_completed" to "പൂർത്തിയായവ",
+        "tasks_create_task" to "ജോലി ചേർക്കുക",
+        "tasks_edit_task" to "ജോലി തിരുത്തുക",
+        "tasks_task_details" to "ജോലി വിവരങ്ങൾ",
+        "tasks_mark_completed" to "പൂർത്തിയായി എന്ന് അടയാളപ്പെടുത്തുക",
+        "tasks_save_task" to "ജോലി സംരക്ഷിക്കുക"
     )
 
     // Telugu (తెలుగు)
@@ -422,7 +515,38 @@ object AppStrings {
         "qa_copy_text" to "వచనాన్ని కాపీ చేయండి",
         "qa_review_actions" to "చర్యలను సమీక్షించండి",
         "qa_tasks_identified" to "పనులు గుర్తించబడ్డాయి",
-        "qa_primary_deadline" to "ప్రధాన గడువు తేదీ"
+        "qa_primary_deadline" to "ప్రధాన గడువు తేదీ",
+
+        // Reminders Screen
+        "rem_title" to "రిమైండర్‌లు",
+        "rem_settings" to "రిమైండర్ సెట్టింగ్‌లు",
+        "rem_add" to "జోడించు",
+        "rem_empty_title" to "రిమైండర్‌లు ఏవీ కనుగొనబడలేదు",
+        "rem_empty_desc" to "మీ రిమైండర్ జాబితా ఖాళీగా ఉంది. నోటీసు పత్రాన్ని స్కాన్ చేయండి.",
+        "rem_tab_upcoming" to "రాబోయేవి",
+        "rem_tab_past" to "గతించినవి",
+        "rem_allow_notif" to "నోటిఫికేషన్‌లను అనుమతించండి",
+        "rem_allow_notif_sub" to "గడువు హెచ్చరికలను స్వీకరించండి",
+        "rem_sound" to "ధ్వని",
+        "rem_vibration" to "వైబ్రేషన్",
+        "rem_custom_reminder" to "అనుకూల రిమైండర్",
+        "rem_test_now" to "⚡ ఇప్పుడే పరీక్షించండి",
+        "rem_test_5s" to "⏱️ 5 సెకన్లలో",
+        "rem_save_settings" to "సెట్టింగ్‌లను భద్రపరచండి",
+
+        // Tasks Screen
+        "tasks_title" to "నా పనులు",
+        "tasks_empty_title" to "పనులు ఏవీ అందుబాటులో లేవు",
+        "tasks_empty_desc" to "మీ పని జాబితా ఖాళీగా ఉంది. నోటీసు పత్రాన్ని స్కాన్ చేయండి.",
+        "tasks_search_placeholder" to "పనులు లేదా నోటీసులను శోధించండి...",
+        "tasks_tab_all" to "అన్నీ",
+        "tasks_tab_pending" to "పెండింగ్‌లో ఉన్నాయి",
+        "tasks_tab_completed" to "పూర్తయినవి",
+        "tasks_create_task" to "పనిని సృష్టించండి",
+        "tasks_edit_task" to "పనిని సవరించండి",
+        "tasks_task_details" to "పని వివరాలు",
+        "tasks_mark_completed" to "పూర్తయినట్లు గుర్తించండి",
+        "tasks_save_task" to "పనిని భద్రపరచండి"
     )
 
     // Hindi (हिन्दी)
@@ -528,7 +652,38 @@ object AppStrings {
         "qa_copy_text" to "पाठ कॉपी करें",
         "qa_review_actions" to "कार्यों की समीक्षा करें",
         "qa_tasks_identified" to "कार्य पहचाने गए",
-        "qa_primary_deadline" to "मुख्य अंतिम तिथि"
+        "qa_primary_deadline" to "मुख्य अंतिम तिथि",
+
+        // Reminders Screen
+        "rem_title" to "रिमाइंडर",
+        "rem_settings" to "रिमाइंडर सेटिंग्स",
+        "rem_add" to "जोड़ें",
+        "rem_empty_title" to "कोई रिमाइंडर नहीं मिला",
+        "rem_empty_desc" to "आपकी रिमाइंडर सूची खाली है। नोटिस दस्तावेज़ स्कैन करें।",
+        "rem_tab_upcoming" to "आगामी",
+        "rem_tab_past" to "पिछले",
+        "rem_allow_notif" to "सूचनाएं चालू करें",
+        "rem_allow_notif_sub" to "समय सीमा अलर्ट प्राप्त करें",
+        "rem_sound" to "ध्वनि",
+        "rem_vibration" to "कंपन",
+        "rem_custom_reminder" to "कस्टम रिमाइंडर",
+        "rem_test_now" to "⚡ अभी परीक्षण करें",
+        "rem_test_5s" to "⏱️ 5 सेकंड में",
+        "rem_save_settings" to "सेटिंग्स सहेजें",
+
+        // Tasks Screen
+        "tasks_title" to "मेरे कार्य",
+        "tasks_empty_title" to "कोई कार्य उपलब्ध नहीं है",
+        "tasks_empty_desc" to "आपकी कार्य सूची खाली है। नोटिस दस्तावेज़ अपलोड या स्कैन करें।",
+        "tasks_search_placeholder" to "कार्य या नोटिस खोजें...",
+        "tasks_tab_all" to "सभी",
+        "tasks_tab_pending" to "लंबित",
+        "tasks_tab_completed" to "पूर्ण",
+        "tasks_create_task" to "कार्य बनाएं",
+        "tasks_edit_task" to "कार्य संपादित करें",
+        "tasks_task_details" to "कार्य विवरण",
+        "tasks_mark_completed" to "पूर्ण के रूप में चिह्नित करें",
+        "tasks_save_task" to "कार्य सहेजें"
     )
 
     // Kannada (ಕನ್ನಡ)
@@ -634,7 +789,38 @@ object AppStrings {
         "qa_copy_text" to "ಪಠ್ಯವನ್ನು ನಕಲಿಸಿ",
         "qa_review_actions" to "ಕ್ರಮಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
         "qa_tasks_identified" to "ಕಾರ್ಯಗಳು ಪತ್ತೆಯಾಗಿವೆ",
-        "qa_primary_deadline" to "ಮುಖ್ಯ ಅಂತಿಮ ದಿನಾಂಕ"
+        "qa_primary_deadline" to "ಮುಖ್ಯ ಅಂತಿಮ ದಿನಾಂಕ",
+
+        // Reminders Screen
+        "rem_title" to "ಜ್ಞಾಪನೆಗಳು",
+        "rem_settings" to "ಜ್ಞಾಪನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+        "rem_add" to "ಸೇರಿಸಿ",
+        "rem_empty_title" to "ಯಾವುದೇ ಜ್ಞಾಪನೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+        "rem_empty_desc" to "ನಿಮ್ಮ ಜ್ಞಾಪನೆಗಳ ಪಟ್ಟಿ ಖಾಲಿಯಾಗಿದೆ. ದಾಖಲೆಯನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+        "rem_tab_upcoming" to "ಮುಂಬರುವ",
+        "rem_tab_past" to "ಹಿಂದಿನ",
+        "rem_allow_notif" to "ಅಧಿಸೂಚನೆಗಳನ್ನು ಅನುಮತಿಸಿ",
+        "rem_allow_notif_sub" to "ಗಡುವು ಎಚ್ಚರಿಕೆಗಳನ್ನು ಸ್ವೀಕರಿಸಿ",
+        "rem_sound" to "ಧ್ವನಿ",
+        "rem_vibration" to "ಕಂಪನ",
+        "rem_custom_reminder" to "ಕಸ್ಟಮ್ ಜ್ಞಾಪನೆ",
+        "rem_test_now" to "⚡ ಈಗ ಪರೀಕ್ಷಿಸಿ",
+        "rem_test_5s" to "⏱️ 5 ಸೆಕೆಂಡುಗಳಲ್ಲಿ",
+        "rem_save_settings" to "ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಿ",
+
+        // Tasks Screen
+        "tasks_title" to "ನನ್ನ ಕಾರ್ಯಗಳು",
+        "tasks_empty_title" to "ಯಾವುದೇ ಕಾರ್ಯಗಳು ಲಭ್ಯವಿಲ್ಲ",
+        "tasks_empty_desc" to "ನಿಮ್ಮ ಕಾರ್ಯ ಪಟ್ಟಿ ಖಾಲಿಯಾಗಿದೆ. ದಾಖಲೆಯನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+        "tasks_search_placeholder" to "ಕಾರ್ಯಗಳು ಅಥವಾ ಸೂಚನೆಗಳನ್ನು ಹುಡುಕಿ...",
+        "tasks_tab_all" to "ಎಲ್ಲವೂ",
+        "tasks_tab_pending" to "ಬಾಕಿ ಉಳಿದಿರುವ",
+        "tasks_tab_completed" to "ಪೂರ್ಣಗೊಂಡಿದೆ",
+        "tasks_create_task" to "ಕಾರ್ಯವನ್ನು ರಚಿಸಿ",
+        "tasks_edit_task" to "ಕಾರ್ಯವನ್ನು ಸಂಪಾದಿಸಿ",
+        "tasks_task_details" to "ಕಾರ್ಯದ ವಿವರಗಳು",
+        "tasks_mark_completed" to "ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ",
+        "tasks_save_task" to "ಕಾರ್ಯವನ್ನು ಉಳಿಸಿ"
     )
 
     fun get(key: String): String {
