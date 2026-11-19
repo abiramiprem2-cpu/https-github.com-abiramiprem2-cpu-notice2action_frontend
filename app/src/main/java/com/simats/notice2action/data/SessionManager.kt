@@ -18,6 +18,8 @@ object SessionManager {
     private const val KEY_USER_PHONE = "user_phone"
     private const val KEY_USER_ADDRESS = "user_address"
     private const val KEY_IMAGE_PATH = "image_path"
+    private const val KEY_DOCUMENT_PIN = "document_pin"
+    private const val KEY_DOCUMENT_LOCKED = "document_locked"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -88,5 +90,22 @@ object SessionManager {
         editor.putString(KEY_USER_PASSWORD, password)
         editor.commit()
         UserSession.clear()
+    }
+
+    fun saveDocumentSecurity(context: Context, pin: String, isLocked: Boolean = true) {
+        val editor = getPrefs(context).edit()
+        editor.putString(KEY_DOCUMENT_PIN, pin)
+        editor.putBoolean(KEY_DOCUMENT_LOCKED, isLocked)
+        editor.commit()
+        DocumentAnalysisSession.documentPin = pin
+        DocumentAnalysisSession.isDocumentLocked = isLocked
+    }
+
+    fun getDocumentPin(context: Context): String {
+        return getPrefs(context).getString(KEY_DOCUMENT_PIN, "1234") ?: "1234"
+    }
+
+    fun isDocumentLocked(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_DOCUMENT_LOCKED, false)
     }
 }

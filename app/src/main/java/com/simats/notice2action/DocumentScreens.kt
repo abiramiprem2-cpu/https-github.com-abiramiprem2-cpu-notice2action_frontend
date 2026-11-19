@@ -3045,6 +3045,7 @@ fun DocumentDetailsScreen(
     val isLocked = DocumentAnalysisSession.isDocumentLocked && !DocumentAnalysisSession.isUnlockedForSession
     var pinInput by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
+    var showResetOtpDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -3149,6 +3150,14 @@ fun DocumentDetailsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text("Incorrect password. Access denied.", fontSize = 11.sp, color = Color(0xFFDC2626))
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Forgot password? Reset via Phone OTP",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2563EB),
+                        modifier = Modifier.clickable { showResetOtpDialog = true }
+                    )
                 }
             },
             confirmButton = {
@@ -3173,6 +3182,17 @@ fun DocumentDetailsScreen(
             },
             containerColor = Color.White,
             shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    if (showResetOtpDialog) {
+        DocumentSecurityOtpDialog(
+            onDismissRequest = { showResetOtpDialog = false },
+            onPasswordSetSuccess = { newPin ->
+                pinInput = newPin
+                DocumentAnalysisSession.isUnlockedForSession = true
+                showResetOtpDialog = false
+            }
         )
     }
 }

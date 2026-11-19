@@ -191,4 +191,59 @@ object AuthRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun sendDocSecurityOtp(phone: String, userId: Int? = null): Result<Pair<String, String>> {
+        return try {
+            val body = JSONObject().apply {
+                put("phone", phone.trim())
+                if (userId != null && userId > 0) put("user_id", userId)
+            }
+            val (_, json) = ApiClient.postJson("profile/send_doc_otp.php", body)
+            if (json.optBoolean("success", false)) {
+                val otp = json.optString("otp", "")
+                val msg = json.optString("message", "OTP sent successfully to your phone")
+                Result.success(Pair(msg, otp))
+            } else {
+                Result.failure(Exception(json.optString("message", "Failed to send OTP")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun verifyDocSecurityOtp(phone: String, otp: String, userId: Int? = null): Result<Boolean> {
+        return try {
+            val body = JSONObject().apply {
+                put("phone", phone.trim())
+                put("otp", otp.trim())
+                if (userId != null && userId > 0) put("user_id", userId)
+            }
+            val (_, json) = ApiClient.postJson("profile/verify_doc_otp.php", body)
+            if (json.optBoolean("success", false) || json.optBoolean("verified", false)) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception(json.optString("message", "Invalid or expired OTP code")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateDocSecurityPin(newPin: String, userId: Int? = null, phone: String? = null): Result<String> {
+        return try {
+            val body = JSONObject().apply {
+                put("document_pin", newPin.trim())
+                if (userId != null && userId > 0) put("user_id", userId)
+                if (!phone.isNullOrBlank()) put("phone", phone.trim())
+            }
+            val (_, json) = ApiClient.postJson("profile/update_doc_pin.php", body)
+            if (json.optBoolean("success", false)) {
+                Result.success(json.optString("message", "Document protection password updated"))
+            } else {
+                Result.failure(Exception(json.optString("message", "Failed to update password")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -42,6 +42,7 @@ import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.ActionTask
 import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.ReminderManager
+import com.simats.notice2action.data.SessionManager
 import java.util.Locale
 import java.util.UUID
 
@@ -50,6 +51,7 @@ fun ReviewSuggestedActionsScreen(
     onBackClicked: () -> Unit,
     onConfirmActions: () -> Unit
 ) {
+    val context = LocalContext.current
     val analysis = DocumentAnalysisSession.activeResult
     val dynamicActions = analysis?.actions ?: emptyList()
     val actionItems = remember(dynamicActions) {
@@ -230,6 +232,7 @@ fun ReviewSuggestedActionsScreen(
                                 if (it) {
                                     DocumentAnalysisSession.isUnlockedForSession = false
                                 }
+                                SessionManager.saveDocumentSecurity(context, DocumentAnalysisSession.documentPin, it)
                             }
                         )
                     }

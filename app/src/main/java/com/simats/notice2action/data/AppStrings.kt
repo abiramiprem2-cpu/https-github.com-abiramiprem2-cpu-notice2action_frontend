@@ -135,7 +135,26 @@ object AppStrings {
         "tasks_edit_task" to "Edit Task",
         "tasks_task_details" to "Task Details",
         "tasks_mark_completed" to "Mark as Completed",
-        "tasks_save_task" to "Save Task"
+        "tasks_save_task" to "Save Task",
+
+        // Document Protection & OTP Security
+        "doc_security_title" to "Document Protection Password",
+        "doc_security_sub" to "Set PIN/Password to protect sensitive notices",
+        "otp_check_user_title" to "Verify Identity via Phone OTP",
+        "otp_check_user_desc" to "To set or reset your Document Protection Password, we verify your identity by sending an OTP to your phone.",
+        "otp_phone_label" to "Registered Phone Number",
+        "otp_send_btn" to "Send Verification OTP",
+        "otp_enter_code" to "Enter 6-Digit OTP",
+        "otp_verify_btn" to "Verify User & Proceed",
+        "otp_resend" to "Resend Code",
+        "doc_new_pwd_title" to "Set New Document Password",
+        "doc_new_pwd_label" to "New Password / PIN",
+        "doc_confirm_pwd_label" to "Confirm Password / PIN",
+        "doc_save_pwd_btn" to "Save Password & Protect Documents",
+        "doc_pwd_success" to "Document Protection Password set successfully!",
+        "doc_pwd_mismatch" to "Passwords do not match. Please verify.",
+        "doc_pwd_too_short" to "Password must be at least 4 characters/digits",
+        "otp_invalid_error" to "Invalid OTP code. Please check and try again."
     )
 
     // Tamil (தமிழ்)
@@ -272,7 +291,26 @@ object AppStrings {
         "tasks_edit_task" to "பணியைத் திருத்து",
         "tasks_task_details" to "பணி விவரங்கள்",
         "tasks_mark_completed" to "முடிந்தது எனக் குறிக்கவும்",
-        "tasks_save_task" to "பணியைச் சேமி"
+        "tasks_save_task" to "பணியைச் சேமி",
+
+        // Document Protection & OTP Security
+        "doc_security_title" to "ஆவணப் பாதுகாப்பு கடவுச்சொல்",
+        "doc_security_sub" to "முக்கிய ஆவணங்களை பாதுகாக்க கடவுச்சொல்லை அமைக்கவும்",
+        "otp_check_user_title" to "தொலைபேசி OTP மூலம் பயனர் சரிபார்ப்பு",
+        "otp_check_user_desc" to "உங்கள் ஆவணப் பாதுகாப்பு கடவுச்சொல்லை அமைக்க, உங்கள் மொபைலுக்கு ஒருமுறை கடவுச்சொல் (OTP) அனுப்பி பயனர் சரிபார்க்கப்படுகிறார்.",
+        "otp_phone_label" to "பதிவுசெய்த தொலைபேசி எண்",
+        "otp_send_btn" to "சரிபார்ப்பு OTP அனுப்புக",
+        "otp_enter_code" to "6 இலக்க OTP ஐ உள்ளிடவும்",
+        "otp_verify_btn" to "பயனரை சரிபார்த்து தொடரவும்",
+        "otp_resend" to "குறியீட்டை மீண்டும் அனுப்புக",
+        "doc_new_pwd_title" to "புதிய ஆவண கடவுச்சொல்லை அமைக்கவும்",
+        "doc_new_pwd_label" to "புதிய கடவுச்சொல் / பின்",
+        "doc_confirm_pwd_label" to "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+        "doc_save_pwd_btn" to "கடவுச்சொல்லை சேமித்து ஆவணங்களை பாதுகாக்கவும்",
+        "doc_pwd_success" to "ஆவணப் பாதுகாப்பு கடவுச்சொல் வெற்றிகரமாக அமைக்கப்பட்டது!",
+        "doc_pwd_mismatch" to "கடவுச்சொற்கள் பொருந்தவில்லை. மீண்டும் சரிபார்க்கவும்.",
+        "doc_pwd_too_short" to "கடவுச்சொல் குறைந்தது 4 எழுத்துக்கள்/எண்கள் இருக்க வேண்டும்",
+        "otp_invalid_error" to "தவறான OTP. மீண்டும் சரிபார்க்கவும்."
     )
 
     // Malayalam (മലയാളം)
@@ -409,7 +447,26 @@ object AppStrings {
         "tasks_edit_task" to "ജോലി തിരുത്തുക",
         "tasks_task_details" to "ജോലി വിവരങ്ങൾ",
         "tasks_mark_completed" to "പൂർത്തിയായി എന്ന് അടയാളപ്പെടുത്തുക",
-        "tasks_save_task" to "ജോലി സംരക്ഷിക്കുക"
+        "tasks_save_task" to "ജോലി സംരക്ഷിക്കുക",
+
+        // Document Protection & OTP Security
+        "doc_security_title" to "രേഖാ സംരക്ഷണ പാസ്‌വേഡ്",
+        "doc_security_sub" to "പ്രധാന രേഖകൾ സംരക്ഷിക്കാൻ പാസ്‌വേഡ് സജ്ജമാക്കുക",
+        "otp_check_user_title" to "ഫോൺ ഒടിപി വഴി ഉപയോക്തൃ പരിശോധന",
+        "otp_check_user_desc" to "നിങ്ങളുടെ രേഖാ സംരക്ഷണ പാസ്‌വേഡ് സജ്ജമാക്കാൻ, ഞങ്ങൾ നിങ്ങളുടെ ഫോണിലേക്ക് ഒടിപി അയച്ച് ഉപയോക്താവിനെ പരിശോധിക്കുന്നു.",
+        "otp_phone_label" to "രജിസ്റ്റർ ചെയ്ത ഫോൺ നമ്പർ",
+        "otp_send_btn" to "പരിശോധനാ ഒടിപി അയയ്ക്കുക",
+        "otp_enter_code" to "6 അക്ക ഒടിപി നൽകുക",
+        "otp_verify_btn" to "ഉപയോക്താവിനെ പരിശോധിച്ച് തുടരുക",
+        "otp_resend" to "കോഡ് വീണ്ടും അയയ്ക്കുക",
+        "doc_new_pwd_title" to "പുതിയ രേഖാ പാസ്‌വേഡ് സജ്ജമാക്കുക",
+        "doc_new_pwd_label" to "പുതിയ പാസ്‌വേഡ് / പിൻ",
+        "doc_confirm_pwd_label" to "പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക",
+        "doc_save_pwd_btn" to "പാസ്‌വേഡ് സംരക്ഷിച്ച് രേഖകൾ സൂക്ഷിക്കുക",
+        "doc_pwd_success" to "രേഖാ സംരക്ഷണ പാസ്‌വേഡ് വിജയകരമായി സജ്ജമാക്കി!",
+        "doc_pwd_mismatch" to "പാസ്‌വേഡുകൾ പൊരുത്തപ്പെടുന്നില്ല. ദയവായി പരിശോധിക്കുക.",
+        "doc_pwd_too_short" to "പാസ്‌വേഡിൽ കുറഞ്ഞത് 4 അക്കങ്ങൾ ഉണ്ടായിരിക്കണം",
+        "otp_invalid_error" to "അസാധുവായ ഒടിപി. ദയവായി വീണ്ടും ശ്രമിക്കുക."
     )
 
     // Telugu (తెలుగు)
@@ -546,7 +603,26 @@ object AppStrings {
         "tasks_edit_task" to "పనిని సవరించండి",
         "tasks_task_details" to "పని వివరాలు",
         "tasks_mark_completed" to "పూర్తయినట్లు గుర్తించండి",
-        "tasks_save_task" to "పనిని భద్రపరచండి"
+        "tasks_save_task" to "పనిని భద్రపరచండి",
+
+        // Document Protection & OTP Security
+        "doc_security_title" to "పత్ర రక్షణ పాస్‌వర్డ్",
+        "doc_security_sub" to "ముఖ్యమైన పత్రాలను రక్షించడానికి పాస్‌వర్డ్‌ను సెట్ చేయండి",
+        "otp_check_user_title" to "ఫోన్ OTP ద్వారా వినియోగదారు ధృవీకరణ",
+        "otp_check_user_desc" to "మీ పత్ర రక్షణ పాస్‌వర్డ్‌ను సెట్ చేయడానికి, మేము మీ ఫోన్‌కు OTP పంపి వినియోగదారుని ధృవీకరిస్తాము.",
+        "otp_phone_label" to "నమోదిత ఫోన్ నంబర్",
+        "otp_send_btn" to "ధృవీకరణ OTP పంపండి",
+        "otp_enter_code" to "6 అంకెల OTP ని నమోదు చేయండి",
+        "otp_verify_btn" to "వినియోగదారుని ధృవీకరించి కొనసాగండి",
+        "otp_resend" to "కోడ్‌ని మళ్లీ పంపండి",
+        "doc_new_pwd_title" to "కొత్త పత్ర పాస్‌వర్డ్‌ను సెట్ చేయండి",
+        "doc_new_pwd_label" to "కొత్త పాస్‌వర్డ్ / పిన్",
+        "doc_confirm_pwd_label" to "పాస్‌వర్డ్‌ను నిర్ధారించండి",
+        "doc_save_pwd_btn" to "పాస్‌వర్డ్‌ను సేవ్ చేసి పత్రాలను రక్షించండి",
+        "doc_pwd_success" to "పత్ర రక్షణ పాస్‌వర్డ్ విజయవంతంగా సెట్ చేయబడింది!",
+        "doc_pwd_mismatch" to "పాస్‌వర్డ్‌లు సరిపోలడం లేదు. దయచేసి ధృవీకరించండి.",
+        "doc_pwd_too_short" to "పాస్‌వర్డ్ కనీసం 4 అంకెలు ఉండాలి",
+        "otp_invalid_error" to "చెల్లని OTP కోడ్. దయచేసి మళ్లీ ప్రయత్నించండి."
     )
 
     // Hindi (हिन्दी)
@@ -683,7 +759,26 @@ object AppStrings {
         "tasks_edit_task" to "कार्य संपादित करें",
         "tasks_task_details" to "कार्य विवरण",
         "tasks_mark_completed" to "पूर्ण के रूप में चिह्नित करें",
-        "tasks_save_task" to "कार्य सहेजें"
+        "tasks_save_task" to "कार्य सहेजें",
+
+        // Document Protection & OTP Security
+        "doc_security_title" to "दस्तावेज़ सुरक्षा पासवर्ड",
+        "doc_security_sub" to "महत्वपूर्ण दस्तावेज़ों की सुरक्षा के लिए पासवर्ड सेट करें",
+        "otp_check_user_title" to "फ़ोन OTP के माध्यम से उपयोगकर्ता सत्यापन",
+        "otp_check_user_desc" to "अपने दस्तावेज़ सुरक्षा पासवर्ड को सेट करने के लिए, हम आपके फ़ोन पर एक OTP भेजकर आपकी पहचान सत्यापित करते हैं।",
+        "otp_phone_label" to "पंजीकृत फ़ोन नंबर",
+        "otp_send_btn" to "सत्यापन OTP भेजें",
+        "otp_enter_code" to "6 अंकों का OTP दर्ज करें",
+        "otp_verify_btn" to "सत्यापित करें और आगे बढ़ें",
+        "otp_resend" to "कोड फिर से भेजें",
+        "doc_new_pwd_title" to "नया दस्तावेज़ पासवर्ड सेट करें",
+        "doc_new_pwd_label" to "नया पासवर्ड / पिन",
+        "doc_confirm_pwd_label" to "पासवर्ड की पुष्टि करें",
+        "doc_save_pwd_btn" to "पासवर्ड सहेजें और दस्तावेज़ सुरक्षित करें",
+        "doc_pwd_success" to "दस्तावेज़ सुरक्षा पासवर्ड सफलतापूर्वक सेट हो गया!",
+        "doc_pwd_mismatch" to "पासवर्ड मेल नहीं खाते। कृपया जाँच करें।",
+        "doc_pwd_too_short" to "पासवर्ड कम से कम 4 अक्षरों/अंकों का होना चाहिए",
+        "otp_invalid_error" to "अमान्य OTP कोड। कृपया पुनः प्रयास करें।"
     )
 
     // Kannada (ಕನ್ನಡ)
@@ -820,7 +915,26 @@ object AppStrings {
         "tasks_edit_task" to "ಕಾರ್ಯವನ್ನು ಸಂಪಾದಿಸಿ",
         "tasks_task_details" to "ಕಾರ್ಯದ ವಿವರಗಳು",
         "tasks_mark_completed" to "ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ",
-        "tasks_save_task" to "ಕಾರ್ಯವನ್ನು ಉಳಿಸಿ"
+        "tasks_save_task" to "ಕಾರ್ಯವನ್ನು ಉಳಿಸಿ",
+
+        // Document Protection & OTP Security
+        "doc_security_title" to "ದಾಖಲೆ ರಕ್ಷಣೆ ಪಾಸ್‌ವರ್ಡ್",
+        "doc_security_sub" to "ಪ್ರಮುಖ ದಾಖಲೆಗಳನ್ನು ರಕ್ಷಿಸಲು ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಿ",
+        "otp_check_user_title" to "ಫೋನ್ OTP ಮೂಲಕ ಬಳಕೆದಾರ ಪರಿಶೀಲನೆ",
+        "otp_check_user_desc" to "ನಿಮ್ಮ ದಾಖಲೆ ರಕ್ಷಣೆ ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಲು, ನಿಮ್ಮ ಫೋನ್‌ಗೆ OTP ಕಳುಹಿಸುವ ಮೂಲಕ ಬಳಕೆದಾರರನ್ನು ಪರಿಶೀಲಿಸುತ್ತೇವೆ.",
+        "otp_phone_label" to "ನೋಂದಾಯಿತ ಫೋನ್ ಸಂಖ್ಯೆ",
+        "otp_send_btn" to "ಪರಿಶೀಲನಾ OTP ಕಳುಹಿಸಿ",
+        "otp_enter_code" to "6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ",
+        "otp_verify_btn" to "ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮುಂದುವರಿಯಿರಿ",
+        "otp_resend" to "ಕೋಡ್ ಮರುಕಳುಹಿಸಿ",
+        "doc_new_pwd_title" to "ಹೊಸ ದಾಖಲೆ ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಿ",
+        "doc_new_pwd_label" to "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ / ಪಿನ್",
+        "doc_confirm_pwd_label" to "ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ",
+        "doc_save_pwd_btn" to "ಪಾಸ್‌ವರ್ಡ್ ಉಳಿಸಿ ಮತ್ತು ದಾಖಲೆಗಳನ್ನು ರಕ್ಷಿಸಿ",
+        "doc_pwd_success" to "ದಾಖಲೆ ರಕ್ಷಣೆ ಪಾಸ್‌ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ಹೊಂದಿಸಲಾಗಿದೆ!",
+        "doc_pwd_mismatch" to "ಪಾಸ್‌ವರ್ಡ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ.",
+        "doc_pwd_too_short" to "ಪಾಸ್‌ವರ್ಡ್ ಕನಿಷ್ಠ 4 ಅಕ್ಷರಗಳು/ಅಂಕಿಗಳನ್ನು ಹೊಂದಿರಬೇಕು",
+        "otp_invalid_error" to "ಅಮಾನ್ಯ OTP ಕೋಡ್. ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಪುನಃ ಪ್ರಯತ್ನಿಸಿ."
     )
 
     fun get(key: String): String {

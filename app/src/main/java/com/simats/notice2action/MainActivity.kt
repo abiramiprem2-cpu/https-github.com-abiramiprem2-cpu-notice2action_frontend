@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.simats.notice2action.data.AuthRepository
+import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.LanguageManager
 import com.simats.notice2action.data.NotificationHelper
 import com.simats.notice2action.data.SessionManager
@@ -105,6 +106,8 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(Unit) {
                     LanguageManager.init(context)
+                    DocumentAnalysisSession.documentPin = SessionManager.getDocumentPin(context)
+                    DocumentAnalysisSession.isDocumentLocked = SessionManager.isDocumentLocked(context)
                     if (currentScreen == AppScreen.SPLASH) {
                         val savedUser = SessionManager.getSavedUser(context)
                         val savedEmail = SessionManager.getSavedEmail(context)
