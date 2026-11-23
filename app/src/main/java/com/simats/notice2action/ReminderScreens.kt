@@ -144,7 +144,12 @@ fun RemindersScreen(
                             modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "⚠️", fontSize = 20.sp)
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(22.dp)
+                            )
                             Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
@@ -827,7 +832,12 @@ fun ReminderSettingsScreen(
                             modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "⚠️", fontSize = 20.sp)
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(22.dp)
+                            )
                             Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(

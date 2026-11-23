@@ -697,7 +697,12 @@ fun MyTasksScreen(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
                     )
-                    Text(text = "☷", fontSize = 20.sp, color = Color(0xFF2563EB))
+                    Icon(
+                        imageVector = Icons.Default.GridView,
+                        contentDescription = null,
+                        tint = Color(0xFF2563EB),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -837,14 +842,21 @@ fun MyTasksScreen(
                                 }
                             )
                             if (searchQuery.isNotEmpty()) {
-                                Text(
-                                    text = "✕",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF94A3B8),
-                                    modifier = Modifier.clickable { searchQuery = "" }
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear",
+                                    tint = Color(0xFF94A3B8),
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clickable { searchQuery = "" }
                                 )
                             } else {
-                                Text(text = "≡", fontSize = 18.sp, color = Color(0xFF94A3B8))
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = null,
+                                    tint = Color(0xFF94A3B8),
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                     }
@@ -901,12 +913,20 @@ fun MyTasksScreen(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
                         )
-                        Text(
-                            text = "Due date ↓",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2563EB)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Due date ",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDownward,
+                                contentDescription = null,
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -1190,12 +1210,21 @@ fun TaskDetailsScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(
-                                text = "← Back to Tasks",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Back to Tasks",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 } else {
@@ -1892,11 +1921,13 @@ fun EditTaskScreen(
                                     color = Color(0xFF334155)
                                 )
                             }
-                            Text(
-                                text = "✕",
-                                fontSize = 12.sp,
-                                color = Color(0xFF94A3B8),
-                                modifier = Modifier.clickable { checklist.removeAt(idx) }
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove",
+                                tint = Color(0xFF94A3B8),
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { checklist.removeAt(idx) }
                             )
                         }
                     }

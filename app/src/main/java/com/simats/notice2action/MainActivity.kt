@@ -86,11 +86,29 @@ class MainActivity : ComponentActivity() {
                         AppScreen.SPLASH, AppScreen.ONBOARDING_1, AppScreen.ONBOARDING_2, AppScreen.LOGIN -> {
                             activity?.finish()
                         }
+                        AppScreen.CREATE_ACCOUNT, AppScreen.FORGOT_PASSWORD -> {
+                            currentScreen = AppScreen.LOGIN
+                        }
+                        AppScreen.SCAN_DOCUMENT, AppScreen.UPLOAD_DOCUMENT -> {
+                            currentScreen = AppScreen.MAIN
+                        }
+                        AppScreen.DOCUMENT_PREVIEW -> {
+                            currentScreen = AppScreen.UPLOAD_DOCUMENT
+                        }
+                        AppScreen.NOTICE_DETAILS -> {
+                            currentScreen = AppScreen.DOCUMENT_PREVIEW
+                        }
+                        AppScreen.REVIEW_ACTIONS -> {
+                            currentScreen = AppScreen.NOTICE_DETAILS
+                        }
+                        AppScreen.UPCOMING_ACTIONS -> {
+                            currentScreen = AppScreen.MAIN
+                        }
+                        AppScreen.NAVIGATION_DRAWER -> {
+                            currentScreen = AppScreen.MAIN
+                        }
                         AppScreen.TASK_DETAILS, AppScreen.EDIT_TASK -> {
                             currentScreen = AppScreen.MY_TASKS
-                        }
-                        AppScreen.NOTICE_DETAILS, AppScreen.REVIEW_ACTIONS, AppScreen.UPCOMING_ACTIONS -> {
-                            currentScreen = AppScreen.MAIN
                         }
                         AppScreen.DOCUMENT_DETAILS, AppScreen.SHARE_NOTICE -> {
                             currentScreen = AppScreen.MY_DOCUMENTS
@@ -98,7 +116,19 @@ class MainActivity : ComponentActivity() {
                         AppScreen.LANGUAGE_SETTINGS -> {
                             currentScreen = AppScreen.SETTINGS_PRIVACY
                         }
-                        else -> {
+                        AppScreen.SETTINGS_PRIVACY, AppScreen.HELP_SUPPORT -> {
+                            currentScreen = AppScreen.PROFILE
+                        }
+                        AppScreen.REMINDER_SETTINGS -> {
+                            currentScreen = AppScreen.REMINDERS
+                        }
+                        AppScreen.GROUP_DETAILS -> {
+                            currentScreen = AppScreen.YOUR_GROUPS
+                        }
+                        AppScreen.PUBLISH_NOTICE -> {
+                            currentScreen = AppScreen.GROUP_DETAILS
+                        }
+                        AppScreen.CALENDAR, AppScreen.MY_DOCUMENTS, AppScreen.MY_TASKS, AppScreen.REMINDERS, AppScreen.PROFILE, AppScreen.YOUR_GROUPS -> {
                             currentScreen = AppScreen.MAIN
                         }
                     }

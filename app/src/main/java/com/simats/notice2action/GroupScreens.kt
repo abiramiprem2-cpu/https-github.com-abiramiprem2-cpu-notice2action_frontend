@@ -12,7 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -71,11 +71,10 @@ fun YourGroupsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "←",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155),
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF334155),
                             modifier = Modifier
                                 .clickable { onBackClicked() }
                                 .padding(end = 12.dp)
@@ -418,11 +417,10 @@ fun GroupDetailsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "←",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155),
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF334155),
                             modifier = Modifier
                                 .clickable { onBackClicked() }
                                 .padding(end = 12.dp)
@@ -521,7 +519,12 @@ fun GroupDetailsScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "⚲", fontSize = 14.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = null,
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = "Admin Settings", fontSize = 13.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
                         }
@@ -821,11 +824,20 @@ fun GroupDetailsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "22 Oct • 10:00 AM — Attend team briefing →",
-                    fontSize = 11.sp,
-                    color = Color(0xFF64748B)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "22 Oct • 10:00 AM — Attend team briefing",
+                        fontSize = 11.sp,
+                        color = Color(0xFF64748B)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(2.dp))
 
@@ -940,11 +952,10 @@ fun PublishNoticeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "←",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155),
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF334155),
                             modifier = Modifier
                                 .clickable { onBackClicked() }
                                 .padding(end = 12.dp)
@@ -1210,7 +1221,12 @@ fun PublishNoticeScreen(
                         modifier = Modifier.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "⚠️", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Presentation time remains provisional and is excluded from published actions.",

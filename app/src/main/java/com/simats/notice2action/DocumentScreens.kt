@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -344,12 +345,16 @@ fun ScanDocumentScreen(
                                 .background(Color(0xFF16A34A).copy(alpha = 0.9f), RoundedCornerShape(20.dp))
                                 .padding(horizontal = 14.dp, vertical = 6.dp)
                         ) {
-                            Text(
-                                text = "✓ Photo Captured Successfully",
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Photo Captured Successfully",
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     } else if (!hasCameraPermission) {
                         // Permission request state
@@ -2847,11 +2852,10 @@ fun MyDocumentsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "←",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF334155),
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color(0xFF334155),
                         modifier = Modifier
                             .clickable { onBackClicked() }
                             .padding(end = 12.dp)
@@ -3065,11 +3069,10 @@ fun DocumentDetailsScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "←",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF334155),
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color(0xFF334155),
                         modifier = Modifier
                             .clickable { onBackClicked() }
                             .padding(end = 12.dp)
@@ -3215,11 +3218,10 @@ fun ShareNoticeScreen(
                 .padding(20.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "←",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF334155),
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF334155),
                     modifier = Modifier
                         .clickable { onBackClicked() }
                         .padding(end = 12.dp)
@@ -3268,7 +3270,16 @@ fun ShareNoticeScreen(
                         Text(text = "College Students", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
                         Text(text = "24 members • Innovation Week hub", fontSize = 11.sp, color = Color(0xFF64748B))
                     }
-                    Text(text = "Share →", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "Share", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 

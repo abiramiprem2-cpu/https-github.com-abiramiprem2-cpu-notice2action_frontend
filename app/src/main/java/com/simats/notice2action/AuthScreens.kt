@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -195,11 +196,11 @@ fun OnboardingStep1Screen(
                             .background(Color(0xFFEEF2FF), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "→",
-                            fontSize = 18.sp,
-                            color = Color(0xFF4F46E5),
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color(0xFF4F46E5),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -398,11 +399,11 @@ fun OnboardingStep1Screen(
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "→",
-                            fontSize = 18.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -443,11 +444,11 @@ fun OnboardingStep2Screen(
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "←",
-                                fontSize = 18.sp,
-                                color = Color(0xFF4F46E5),
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF4F46E5),
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -560,7 +561,12 @@ fun OnboardingStep2Screen(
                                             .background(Color(0xFF4F46E5), CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = "✓", fontSize = 9.sp, color = Color.White)
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(10.dp)
+                                        )
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column {
@@ -672,11 +678,11 @@ fun OnboardingStep2Screen(
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "→",
-                            fontSize = 18.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -725,11 +731,11 @@ fun LoginScreen(
                                 .clickable { onBackClicked() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "←",
-                                fontSize = 18.sp,
-                                color = Color(0xFF4F46E5),
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF4F46E5),
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -951,11 +957,11 @@ fun CreateAccountScreen(
                                 .clickable { onBackToLogin() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "←",
-                                fontSize = 18.sp,
-                                color = Color(0xFF4F46E5),
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF4F46E5),
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -967,7 +973,12 @@ fun CreateAccountScreen(
                         )
                     }
 
-                    Text(text = "✨", fontSize = 20.sp)
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF4F46E5),
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -1191,11 +1202,11 @@ fun ForgotPasswordScreen(
                                 .clickable { onBackToLogin() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "←",
-                                fontSize = 18.sp,
-                                color = Color(0xFF4F46E5),
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF4F46E5),
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
