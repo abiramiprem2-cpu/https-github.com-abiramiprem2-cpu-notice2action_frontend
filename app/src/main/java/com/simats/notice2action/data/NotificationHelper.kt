@@ -26,6 +26,10 @@ object NotificationHelper {
     private const val CHANNEL_NAME = "Notice2Action Reminders"
     private const val CHANNEL_DESC = "Notifications for upcoming task deadlines and notice actions."
 
+    const val OTP_CHANNEL_ID = "notice2action_security_otp_v1"
+    private const val OTP_CHANNEL_NAME = "Notice2Action Security Verification"
+    private const val OTP_CHANNEL_DESC = "Instant OTP and verification notifications for identity and document protection."
+
     var isSoundEnabled: Boolean = true
     var isVibrationEnabled: Boolean = true
 
@@ -55,6 +59,77 @@ object NotificationHelper {
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+        }
+        createOtpNotificationChannel(context)
+    }
+
+    fun createOtpNotificationChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(OTP_CHANNEL_ID, OTP_CHANNEL_NAME, importance).apply {
+                description = OTP_CHANNEL_DESC
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                    .build()
+                setSound(defaultSoundUri, audioAttributes)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                setShowBadge(true)
+                enableLights(true)
+            }
+            val notificationManager: NotificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    fun showOtpVerificationNotification(
+        context: Context,
+        phone: String,
+        otp: String
+    ) {
+        createOtpNotificationChannel(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("otpCode", otp)
+            putExtra("phone", phone)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            778899,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, OTP_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("📱 Notice2Action Security Code: $otp")
+            .setContentText("Your OTP is $otp for $phone. Valid 10 mins.")
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(
+                    "🔐 Notice2Action Security Verification\n\nYour 6-digit OTP code for $phone is:\n\n>>>  $otp  <<<\n\nValid for 10 minutes. Use this code to verify your identity and set your new document protection password."
+                )
+            )
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setVibrate(longArrayOf(0, 500, 200, 500))
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        try {
+            notificationManager.notify(778899, builder.build())
+            Log.d("NotificationHelper", "OTP Notification successfully posted for $phone: $otp")
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "Error presenting OTP notification", e)
         }
     }
 

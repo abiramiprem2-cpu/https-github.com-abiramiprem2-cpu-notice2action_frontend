@@ -1,5 +1,8 @@
 package com.simats.notice2action
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -41,6 +44,7 @@ import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.LanguageManager
+import com.simats.notice2action.data.NotificationHelper
 import com.simats.notice2action.data.SessionManager
 import com.simats.notice2action.data.User
 import com.simats.notice2action.data.UserSession
@@ -1125,59 +1129,132 @@ fun DocumentSecurityOtpDialog(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Simulated SMS preview banner for testing convenience
-                    if (!smsAlertBanner.isNullOrBlank()) {
-                        Surface(
-                            color = Color(0xFFEFF6FF),
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color(0xFF93C5FD)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.NotificationsActive,
-                                        contentDescription = null,
-                                        tint = Color(0xFF2563EB),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "SMS Notification Received:",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1E40AF)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = smsAlertBanner ?: "",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF1E3A8A)
+                    // Prominent OTP Delivery Banner with Notification & Clipboard Feedback
+                    Surface(
+                        color = if (AppThemeManager.isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, Color(0xFF93C5FD)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.NotificationsActive,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Button(
-                                    onClick = {
-                                        if (sentOtp.isNotBlank()) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "OTP Dispatched to Phone & Status Bar",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E40AF)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "Target: $phoneInput • Valid for 10 mins",
+                                fontSize = 11.sp,
+                                color = Color(0xFF3B82F6),
+                                fontWeight = FontWeight.Medium
+                            )
+
+                            if (sentOtp.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Surface(
+                                    color = Color(0xFFDBEAFE),
+                                    shape = RoundedCornerShape(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = "Your 6-Digit OTP:",
+                                                fontSize = 10.sp,
+                                                color = Color(0xFF1E3A8A)
+                                            )
+                                            Text(
+                                                text = sentOtp.chunked(1).joinToString("  "),
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                letterSpacing = 2.sp,
+                                                color = Color(0xFF1D4ED8)
+                                            )
+                                        }
+
+                                        Row {
+                                            IconButton(
+                                                onClick = {
+                                                    val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                    cb?.setPrimaryClip(ClipData.newPlainText("Notice2Action OTP", sentOtp))
+                                                    Toast.makeText(context, "OTP $sentOtp copied to clipboard", Toast.LENGTH_SHORT).show()
+                                                },
+                                                modifier = Modifier.size(34.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ContentCopy,
+                                                    contentDescription = "Copy Code",
+                                                    tint = Color(0xFF2563EB),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+
+                                            IconButton(
+                                                onClick = {
+                                                    NotificationHelper.showOtpVerificationNotification(context, phoneInput, sentOtp)
+                                                    Toast.makeText(context, "Notification sent to status bar", Toast.LENGTH_SHORT).show()
+                                                },
+                                                modifier = Modifier.size(34.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Notifications,
+                                                    contentDescription = "Show Notification",
+                                                    tint = Color(0xFF2563EB),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = {
                                             inputOtp = sentOtp
                                             errorMessage = null
-                                        }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDBEAFE)),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = "⚡ Tap to auto-fill OTP ($sentOtp)",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1D4ED8)
-                                    )
+                                            Toast.makeText(context, "Auto-filled OTP: $sentOtp", Toast.LENGTH_SHORT).show()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                        shape = RoundedCornerShape(6.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "⚡ Auto-Fill ($sentOtp)",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = inputOtp,
@@ -1190,6 +1267,13 @@ fun DocumentSecurityOtpDialog(
                         label = { Text(AppStrings.get("otp_enter_code")) },
                         leadingIcon = {
                             Icon(Icons.Default.Pin, contentDescription = null, tint = Color(0xFF2563EB))
+                        },
+                        trailingIcon = {
+                            if (inputOtp.isNotBlank()) {
+                                IconButton(onClick = { inputOtp = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color(0xFF94A3B8))
+                                }
+                            }
                         },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -1227,14 +1311,26 @@ fun DocumentSecurityOtpDialog(
                                         isLoading = false
                                         res.onSuccess { (msg, code) ->
                                             sentOtp = code
+                                            inputOtp = code
                                             smsAlertBanner = "Notice2Action code: $code (valid 10 mins)"
                                             resendTimer = 60
-                                            Toast.makeText(context, "New OTP sent to $phoneInput", Toast.LENGTH_SHORT).show()
+                                            NotificationHelper.showOtpVerificationNotification(context, phoneInput, code)
+                                            try {
+                                                val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                cb?.setPrimaryClip(ClipData.newPlainText("Notice2Action OTP", code))
+                                            } catch (_: Exception) {}
+                                            Toast.makeText(context, "New OTP $code sent to $phoneInput", Toast.LENGTH_SHORT).show()
                                         }.onFailure {
                                             val fallbackOtp = (100000..999999).random().toString()
                                             sentOtp = fallbackOtp
+                                            inputOtp = fallbackOtp
                                             smsAlertBanner = "Notice2Action code: $fallbackOtp (valid 10 mins)"
                                             resendTimer = 60
+                                            NotificationHelper.showOtpVerificationNotification(context, phoneInput, fallbackOtp)
+                                            try {
+                                                val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                cb?.setPrimaryClip(ClipData.newPlainText("Notice2Action OTP", fallbackOtp))
+                                            } catch (_: Exception) {}
                                         }
                                     }
                                 }
@@ -1399,17 +1495,29 @@ fun DocumentSecurityOtpDialog(
                             isLoading = false
                             res.onSuccess { (msg, code) ->
                                 sentOtp = code
+                                inputOtp = code
                                 smsAlertBanner = "Notice2Action code: $code (valid 10 mins)"
                                 resendTimer = 60
                                 currentStep = 2
-                                Toast.makeText(context, "Verification OTP sent to $clean", Toast.LENGTH_SHORT).show()
+                                NotificationHelper.showOtpVerificationNotification(context, clean, code)
+                                try {
+                                    val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                    cb?.setPrimaryClip(ClipData.newPlainText("Notice2Action OTP", code))
+                                } catch (_: Exception) {}
+                                Toast.makeText(context, "Verification OTP $code sent! Check your notifications", Toast.LENGTH_LONG).show()
                             }.onFailure {
                                 val fallbackOtp = (100000..999999).random().toString()
                                 sentOtp = fallbackOtp
+                                inputOtp = fallbackOtp
                                 smsAlertBanner = "Notice2Action code: $fallbackOtp (valid 10 mins)"
                                 resendTimer = 60
                                 currentStep = 2
-                                Toast.makeText(context, "Verification OTP generated for $clean", Toast.LENGTH_SHORT).show()
+                                NotificationHelper.showOtpVerificationNotification(context, clean, fallbackOtp)
+                                try {
+                                    val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                    cb?.setPrimaryClip(ClipData.newPlainText("Notice2Action OTP", fallbackOtp))
+                                } catch (_: Exception) {}
+                                Toast.makeText(context, "Verification OTP generated for $clean", Toast.LENGTH_LONG).show()
                             }
                         }
                     },
@@ -1481,6 +1589,14 @@ fun DocumentSecurityOtpDialog(
                             SessionManager.saveDocumentSecurity(context, newPassword, isProtectionEnabled)
                             DocumentAnalysisSession.documentPin = newPassword
                             DocumentAnalysisSession.isDocumentLocked = isProtectionEnabled
+
+                            // Save user phone in local session
+                            val curUser = UserSession.currentUser ?: SessionManager.getSavedUser(context)
+                            if (curUser != null) {
+                                val updatedUser = curUser.copy(phone = phoneInput.trim())
+                                UserSession.currentUser = updatedUser
+                                SessionManager.saveSession(context, updatedUser)
+                            }
 
                             // Save to backend
                             try {
