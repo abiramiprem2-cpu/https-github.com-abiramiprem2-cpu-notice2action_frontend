@@ -31,8 +31,10 @@ data class ActionTask(
     val quote: String = "",
     val category: String = "Academic",
     var isConfirmed: Boolean = true,
+    var isCompleted: Boolean = false,
     var reminderTime: String = "19 Oct 2026 • 9:00 AM",
-    var checklistItems: List<String> = emptyList()
+    var checklistItems: List<String> = emptyList(),
+    var documentTitle: String = "Notice Document"
 )
 
 data class NoticeAnalysisResult(
@@ -108,8 +110,10 @@ object DocumentAnalysisSession {
         confirmedTasks.clear()
         confirmedTasks.addAll(result.actions)
 
+        DocumentManager.addDocument(context, result)
+
         result.actions.forEach { action ->
-            ReminderManager.addFromActionTask(action, result.documentTitle, context = context)
+            TaskManager.addTask(context, action, result.documentTitle)
         }
 
         return result

@@ -43,6 +43,8 @@ import com.simats.notice2action.data.ActionTask
 import com.simats.notice2action.data.AppStrings
 import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.SessionManager
+import com.simats.notice2action.data.TaskManager
+import com.simats.notice2action.data.IntentUtils
 import java.util.Locale
 import java.util.UUID
 
@@ -245,6 +247,10 @@ fun ReviewSuggestedActionsScreen(
                 onClick = {
                     DocumentAnalysisSession.confirmedTasks.clear()
                     DocumentAnalysisSession.confirmedTasks.addAll(actionItems)
+                    val docTitle = analysis?.documentTitle ?: "Notice Document"
+                    actionItems.forEach { act ->
+                        TaskManager.addTask(context, act, docTitle)
+                    }
                     onConfirmActions()
                 },
                 modifier = Modifier
@@ -630,7 +636,9 @@ data class TaskItemModel(
     val priorityText: String,
     val priorityBg: Color,
     val priorityTextColor: Color,
-    val status: String
+    val status: String,
+    val isCompleted: Boolean = false,
+    val originalTask: ActionTask? = null
 )
 
 @Composable
@@ -642,31 +650,32 @@ fun MyTasksScreen(
     onAddTaskClicked: () -> Unit = {},
     onUploadClicked: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
 
-    val rawTasks = DocumentAnalysisSession.confirmedTasks
+    val rawTasks = TaskManager.tasks
 
-    val tasksList = remember(rawTasks.size, rawTasks.toList()) {
-        rawTasks.toList().map { action: ActionTask ->
-            val (priorityBg, priorityTextColor) = when (action.priorityText.lowercase(Locale.ROOT)) {
-                "high" -> Pair(Color(0xFFFEE2E2), Color(0xFFEF4444))
-                "medium" -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
-                "low" -> Pair(Color(0xFFDCFCE7), Color(0xFF16A34A))
-                else -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
-            }
-            val subtitle = if (action.description.isNotBlank()) action.description else "${action.category} • Action item"
-            TaskItemModel(
-                id = action.id,
-                title = action.title,
-                subtitle = subtitle,
-                date = action.dateTime,
-                priorityText = action.priorityText,
-                priorityBg = priorityBg,
-                priorityTextColor = priorityTextColor,
-                status = if (action.isConfirmed) "Pending" else "Completed"
-            )
+    val tasksList = rawTasks.map { action: ActionTask ->
+        val (priorityBg, priorityTextColor) = when (action.priorityText.lowercase(Locale.ROOT)) {
+            "high" -> Pair(Color(0xFFFEE2E2), Color(0xFFEF4444))
+            "medium" -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
+            "low" -> Pair(Color(0xFFDCFCE7), Color(0xFF16A34A))
+            else -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
         }
+        val subtitle = if (action.description.isNotBlank()) action.description else "${action.category} • Action item"
+        TaskItemModel(
+            id = action.id,
+            title = action.title,
+            subtitle = subtitle,
+            date = action.dateTime,
+            priorityText = action.priorityText,
+            priorityBg = priorityBg,
+            priorityTextColor = priorityTextColor,
+            status = if (action.isCompleted) "Completed" else "Pending",
+            isCompleted = action.isCompleted,
+            originalTask = action
+        )
     }
 
     Surface(
@@ -967,7 +976,14 @@ fun MyTasksScreen(
                                 priorityText = task.priorityText,
                                 priorityBg = task.priorityBg,
                                 priorityTextColor = task.priorityTextColor,
-                                onClick = { onTaskClicked() }
+                                isCompleted = task.isCompleted,
+                                onToggleComplete = {
+                                    TaskManager.toggleTaskCompletion(context, task.id)
+                                },
+                                onClick = {
+                                    task.originalTask?.let { DocumentAnalysisSession.selectedTask = it }
+                                    onTaskClicked()
+                                }
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         }
@@ -1040,6 +1056,8 @@ fun TaskCardItem(
     priorityText: String,
     priorityBg: Color,
     priorityTextColor: Color,
+    isCompleted: Boolean = false,
+    onToggleComplete: () -> Unit = {},
     onClick: () -> Unit = {}
 ) {
     Surface(
@@ -1063,22 +1081,44 @@ fun TaskCardItem(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(20.dp)
-                        .border(1.5.dp, Color(0xFFCBD5E1), RoundedCornerShape(4.dp))
-                )
+                        .size(24.dp)
+                        .background(
+                            if (isCompleted) Color(0xFF16A34A) else Color.Transparent,
+                            RoundedCornerShape(6.dp)
+                        )
+                        .border(
+                            if (isCompleted) 0.dp else 1.5.dp,
+                            if (isCompleted) Color.Transparent else Color(0xFF94A3B8),
+                            RoundedCornerShape(6.dp)
+                        )
+                        .clickable { onToggleComplete() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isCompleted) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Completed",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isCompleted) Color(0xFF94A3B8) else Color(0xFF0F172A),
+                        style = if (isCompleted) TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough) else TextStyle()
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = subtitle,
                         fontSize = 11.sp,
-                        color = Color(0xFF64748B)
+                        color = Color(0xFF64748B),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1100,6 +1140,21 @@ fun TaskCardItem(
                                 color = priorityTextColor
                             )
                         }
+                        if (isCompleted) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFFDCFCE7), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "Done ✓",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF16A34A)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -1114,7 +1169,8 @@ fun TaskDetailsScreen(
     onBackClicked: () -> Unit,
     onEditClicked: () -> Unit = {}
 ) {
-    val currentTask = DocumentAnalysisSession.selectedTask ?: DocumentAnalysisSession.confirmedTasks.firstOrNull()
+    val context = LocalContext.current
+    val currentTask = DocumentAnalysisSession.selectedTask ?: TaskManager.tasks.firstOrNull()
     val activeDoc = DocumentAnalysisSession.activeResult
     var showDeleteTaskDialog by remember { mutableStateOf(false) }
 
@@ -1243,7 +1299,7 @@ fun TaskDetailsScreen(
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = if (currentTask.isConfirmed) "Pending" else "Completed",
+                                text = if (currentTask.isCompleted) "Completed" else "Pending",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF2563EB)
@@ -1504,6 +1560,48 @@ fun TaskDetailsScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Calendar & Share Quick Actions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                IntentUtils.addToDeviceCalendar(context, currentTask.title, currentTask.description)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFF2563EB))
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Calendar", fontSize = 12.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                IntentUtils.shareTask(context, currentTask)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFF64748B))
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Share", fontSize = 12.sp, color = Color(0xFF334155), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     // Edit & Delete Action Buttons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1551,20 +1649,22 @@ fun TaskDetailsScreen(
                 // Bottom Mark as Completed Button
                 Button(
                     onClick = {
-                        currentTask.isConfirmed = false
+                        TaskManager.toggleTaskCompletion(context, currentTask.id)
                         onBackClicked()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (currentTask.isCompleted) Color(0xFF64748B) else Color(0xFF2563EB)
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = AppStrings.get("tasks_mark_completed"),
+                            text = if (currentTask.isCompleted) "Mark as Pending" else AppStrings.get("tasks_mark_completed"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -1587,8 +1687,7 @@ fun TaskDetailsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val targetList: MutableList<ActionTask> = DocumentAnalysisSession.confirmedTasks
-                        targetList.removeAll { it.id == currentTask.id }
+                        TaskManager.deleteTask(context, currentTask.id)
                         DocumentAnalysisSession.selectedTask = null
                         showDeleteTaskDialog = false
                         onBackClicked()
@@ -2048,6 +2147,13 @@ fun EditTaskScreen(
                     }
 
                     DocumentAnalysisSession.selectedTask = updatedTask
+
+                    // Save to TaskManager for persistent offline storage & backend sync
+                    TaskManager.addTask(
+                        context = context,
+                        task = updatedTask,
+                        documentTitle = DocumentAnalysisSession.activeResult?.documentTitle ?: "Custom Task"
+                    )
 
                     // Add to ReminderManager
                     ReminderManager.addCustomReminder(

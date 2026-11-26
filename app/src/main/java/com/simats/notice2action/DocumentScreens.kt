@@ -101,9 +101,17 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.QuestionAnswer
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.text.TextStyle
 import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.LanguageManager
 import com.simats.notice2action.data.AppStrings
+import com.simats.notice2action.data.DocumentManager
+import com.simats.notice2action.data.TaskManager
+import com.simats.notice2action.data.IntentUtils
+import com.simats.notice2action.data.NoticeAiAssistant
 import android.content.ClipData
 import android.content.ClipboardManager
 
@@ -1874,21 +1882,8 @@ fun NoticeDetailsScreen(
     var isAnswering by remember { mutableStateOf(false) }
 
     fun answerNoticeQuestion(q: String) {
-        val lq = q.lowercase()
         isAnswering = true
-        aiAnswer = when {
-            lq.contains("deadline") || lq.contains("due") || lq.contains("when") || lq.contains("date") || lq.contains("கடைசி") ->
-                "The primary cut-off deadline for this notice is ${analysis.primaryDeadline} (${analysis.daysRemaining}). Please complete submissions before this date."
-            lq.contains("task") || lq.contains("do") || lq.contains("action") || lq.contains("checklist") || lq.contains("என்ன") ->
-                "The required tasks identified from this notice are: ${analysis.actions.joinToString("; ") { it.title }}."
-            lq.contains("authority") || lq.contains("who") || lq.contains("issued") || lq.contains("office") ->
-                "This notice was issued by ${analysis.issuingAuthority} under official reference code ${analysis.referenceNumber}."
-            lq.contains("fee") || lq.contains("pay") || lq.contains("amount") || lq.contains("penalty") || lq.contains("கட்டணம்") ->
-                if (analysis.category.contains("Fee")) "Online fee payments must be settled through the university/official portal before ${analysis.primaryDeadline} to avoid late fines."
-                else "This notice does not require fee payment. It is an official announcement from ${analysis.issuingAuthority}."
-            else ->
-                "Based on the extracted notice text: ${analysis.keySummary} Relevant contact authority: ${analysis.issuingAuthority}."
-        }
+        aiAnswer = NoticeAiAssistant.answerQuestion(q, analysis)
         isAnswering = false
     }
 
@@ -2070,7 +2065,7 @@ fun NoticeDetailsScreen(
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = if (explanationLang == "ta") "இந்த ஆவணம் எதைப் பற்றியது?" else AppStrings.get("qa_what_about"),
+                                        text = if (explanationLang == "ta") "AI எளிய விளக்கம்" else "AI Simple Explanation",
                                         fontSize = 11.sp,
                                         color = Color(0xFF2563EB),
                                         fontWeight = FontWeight.Medium
@@ -2833,7 +2828,20 @@ fun MyDocumentsScreen(
     onUploadDocumentClicked: () -> Unit,
     onDocumentClicked: () -> Unit = {}
 ) {
-    val activeDoc = DocumentAnalysisSession.activeResult
+    val context = LocalContext.current
+    val allDocs = DocumentManager.documents
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("All") }
+    var docToDelete by remember { mutableStateOf<NoticeAnalysisResult?>(null) }
+
+    val filteredDocs = allDocs.filter { doc ->
+        val matchesCategory = selectedCategory == "All" || doc.category.equals(selectedCategory, ignoreCase = true)
+        val matchesSearch = searchQuery.isBlank() ||
+            doc.documentTitle.contains(searchQuery, ignoreCase = true) ||
+            doc.issuingAuthority.contains(searchQuery, ignoreCase = true) ||
+            doc.simpleExplanation.contains(searchQuery, ignoreCase = true)
+        matchesCategory && matchesSearch
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -2867,16 +2875,99 @@ fun MyDocumentsScreen(
                         color = Color(0xFF1E293B)
                     )
                 }
+
+                Surface(
+                    color = Color(0xFF2563EB),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable { onUploadDocumentClicked() }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "+ Upload", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Search Bar
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                shape = RoundedCornerShape(12.dp),
+                shadowElevation = 1.dp,
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        decorationBox = { inner ->
+                            if (searchQuery.isEmpty()) {
+                                Text("Search notice by title, department, keyword...", fontSize = 13.sp, color = Color(0xFF94A3B8))
+                            }
+                            inner()
+                        }
+                    )
+                    if (searchQuery.isNotEmpty()) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear",
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { searchQuery = "" }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Category Filter Chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val categories = listOf("All", "Academic", "Meeting", "Financial", "General")
+                categories.forEach { cat ->
+                    val isSelected = selectedCategory == cat
+                    Surface(
+                        modifier = Modifier.clickable { selectedCategory = cat },
+                        color = if (isSelected) Color(0xFF2563EB) else Color.White,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, if (isSelected) Color(0xFF2563EB) else Color(0xFFE2E8F0))
+                    ) {
+                        Text(
+                            text = cat,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else Color(0xFF475569),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                if (activeDoc == null) {
+                if (filteredDocs.isEmpty()) {
                     // Empty State View
                     Column(
                         modifier = Modifier
@@ -2896,7 +2987,7 @@ fun MyDocumentsScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "No Documents Uploaded",
+                            text = if (searchQuery.isNotBlank()) "No Matching Documents" else "No Documents Uploaded",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A),
@@ -2906,7 +2997,7 @@ fun MyDocumentsScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "Upload or scan a notice document to view your extracted documents here.",
+                            text = if (searchQuery.isNotBlank()) "Try searching with another keyword or category filter." else "Upload or scan a notice document to view your extracted documents here.",
                             fontSize = 13.sp,
                             color = Color(0xFF64748B),
                             textAlign = TextAlign.Center,
@@ -2932,19 +3023,30 @@ fun MyDocumentsScreen(
                         }
                     }
                 } else {
-                    // Display ONLY the recent uploaded document entry
-                    DocumentCard(
-                        icon = "📄",
-                        title = activeDoc.documentTitle,
-                        details = "PDF • Scanned notice document",
-                        tagText = "Verify dates",
-                        tagBgColor = Color(0xFFFEF3C7),
-                        tagTextColor = Color(0xFFD97706),
-                        subtitle = "${activeDoc.actions.size} actions identified",
-                        onClick = { onDocumentClicked() }
-                    )
+                    filteredDocs.forEach { doc ->
+                        val (completed, total) = TaskManager.getProgressForDocument(doc.documentTitle)
+                        NoticeDocumentCard(
+                            doc = doc,
+                            completedActions = completed,
+                            totalActions = total,
+                            onClick = {
+                                DocumentAnalysisSession.activeResult = doc
+                                onDocumentClicked()
+                            },
+                            onCalendarClick = {
+                                IntentUtils.addToDeviceCalendar(context, doc.documentTitle, "Deadline: ${doc.primaryDeadline}\nSummary: ${doc.simpleExplanation}")
+                            },
+                            onShareClick = {
+                                IntentUtils.shareNotice(context, doc)
+                            },
+                            onDeleteClick = {
+                                docToDelete = doc
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Button(
                         onClick = { onUploadDocumentClicked() },
@@ -2954,8 +3056,244 @@ fun MyDocumentsScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF2FF)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "Upload New Document", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3B82F6))
+                        Text(text = "+ Upload New Document", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
                     }
+                }
+            }
+        }
+    }
+
+    if (docToDelete != null) {
+        val target = docToDelete!!
+        AlertDialog(
+            onDismissRequest = { docToDelete = null },
+            title = { Text(text = "Delete Document", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
+            text = { Text(text = "Are you sure you want to remove '${target.documentTitle}' from your documents?", fontSize = 13.sp, color = Color(0xFF475569)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        DocumentManager.deleteDocument(context, target.documentTitle)
+                        if (DocumentAnalysisSession.activeResult?.documentTitle == target.documentTitle) {
+                            DocumentAnalysisSession.activeResult = null
+                        }
+                        docToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { docToDelete = null }) {
+                    Text("Cancel", color = Color(0xFF64748B))
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+}
+
+@Composable
+fun NoticeDocumentCard(
+    doc: NoticeAnalysisResult,
+    completedActions: Int,
+    totalActions: Int,
+    onClick: () -> Unit,
+    onCalendarClick: () -> Unit,
+    onShareClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        color = Color.White,
+        shape = RoundedCornerShape(16.dp),
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(Color(0xFFEEF2FF), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "📄", fontSize = 20.sp)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = doc.documentTitle,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "🏛 " + doc.issuingAuthority,
+                            fontSize = 11.sp,
+                            color = Color(0xFF64748B),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            when (doc.category.lowercase()) {
+                                "academic" -> Color(0xFFEFF6FF)
+                                "financial" -> Color(0xFFFEF3C7)
+                                "meeting" -> Color(0xFFEDE9FE)
+                                else -> Color(0xFFDCFCE7)
+                            },
+                            RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = doc.category,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = when (doc.category.lowercase()) {
+                            "academic" -> Color(0xFF2563EB)
+                            "financial" -> Color(0xFFD97706)
+                            "meeting" -> Color(0xFF7C3AED)
+                            else -> Color(0xFF16A34A)
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Primary Deadline Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF8FAFC), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Deadline: ${doc.primaryDeadline}",
+                        fontSize = 11.sp,
+                        color = Color(0xFF1E293B),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Text(
+                    text = doc.daysRemaining,
+                    fontSize = 11.sp,
+                    color = Color(0xFFDC2626),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Checklist Progress Bar
+            val safeTotal = if (totalActions > 0) totalActions else doc.actions.size.coerceAtLeast(1)
+            val progressFraction = (completedActions.toFloat() / safeTotal.toFloat()).coerceIn(0f, 1f)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Actions Progress",
+                    fontSize = 11.sp,
+                    color = Color(0xFF64748B)
+                )
+                Text(
+                    text = "$completedActions / $safeTotal completed",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (completedActions >= safeTotal) Color(0xFF16A34A) else Color(0xFF2563EB)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(5.dp)
+                    .background(Color(0xFFF1F5F9), RoundedCornerShape(3.dp))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(if (progressFraction <= 0.05f) 0.05f else progressFraction)
+                        .fillMaxHeight()
+                        .background(
+                            if (completedActions >= safeTotal) Color(0xFF16A34A) else Color(0xFF2563EB),
+                            RoundedCornerShape(3.dp)
+                        )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Action Quick Buttons Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = { onClick() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text("View Notice", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                IconButton(
+                    onClick = { onCalendarClick() },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Add to Calendar", tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
+                }
+
+                IconButton(
+                    onClick = { onShareClick() },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(0xFFEEF2FF), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = "Share", tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
+                }
+
+                IconButton(
+                    onClick = { onDeleteClick() },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(0xFFFEF2F2), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -3045,11 +3383,15 @@ fun DocumentDetailsScreen(
     onBackClicked: () -> Unit,
     onShareClicked: () -> Unit = {}
 ) {
-    val activeDoc = DocumentAnalysisSession.activeResult
+    val context = LocalContext.current
+    val activeDoc = DocumentAnalysisSession.activeResult ?: DocumentManager.documents.firstOrNull()
     val isLocked = DocumentAnalysisSession.isDocumentLocked && !DocumentAnalysisSession.isUnlockedForSession
     var pinInput by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
     var showResetOtpDialog by remember { mutableStateOf(false) }
+    var showTamilExplanation by remember { mutableStateOf(false) }
+    var userQuestion by remember { mutableStateOf("") }
+    var aiAnswer by remember { mutableStateOf<String?>(null) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -3068,51 +3410,416 @@ fun DocumentDetailsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color(0xFF334155),
-                        modifier = Modifier
-                            .clickable { onBackClicked() }
-                            .padding(end = 12.dp)
-                    )
-                    Text(
-                        text = "Document details",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
-                    )
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color(0xFFEEF2FF), CircleShape)
+                                .clickable { onBackClicked() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Notice Details",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
+                    }
+
+                    if (activeDoc != null) {
+                        IconButton(
+                            onClick = { IntentUtils.shareNotice(context, activeDoc) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "Share", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = activeDoc?.documentTitle ?: "Notice Document",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A)
-                )
+                if (activeDoc == null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("No Document Selected", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                    }
+                } else {
+                    // Authority & Category Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🏛 " + activeDoc.issuingAuthority,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF2563EB)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFEFF6FF), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = activeDoc.category,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                        }
+                    }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = activeDoc?.keySummary ?: "Extracted notice details.",
-                    fontSize = 13.sp,
-                    color = Color(0xFF64748B),
-                    lineHeight = 18.sp
-                )
+                    Text(
+                        text = activeDoc.documentTitle,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Primary Deadline Highlight Card
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFFFEF2F2),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color(0xFFFECACA))
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Deadline: ${activeDoc.primaryDeadline}",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF991B1B)
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFDC2626), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(text = activeDoc.daysRemaining, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Button(
+                                onClick = {
+                                    IntentUtils.addToDeviceCalendar(
+                                        context,
+                                        activeDoc.documentTitle,
+                                        "Deadline: ${activeDoc.primaryDeadline}\nSummary: ${activeDoc.simpleExplanation}"
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(38.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Add Deadline to Google Calendar", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // AI Simple Explanation Card with Tamil Toggle
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White,
+                        shape = RoundedCornerShape(14.dp),
+                        shadowElevation = 1.dp,
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "AI Simple Explanation",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A)
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                                        .padding(2.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(if (!showTamilExplanation) Color.White else Color.Transparent, RoundedCornerShape(6.dp))
+                                            .clickable { showTamilExplanation = false }
+                                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                                    ) {
+                                        Text("EN", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (!showTamilExplanation) Color(0xFF2563EB) else Color(0xFF64748B))
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .background(if (showTamilExplanation) Color.White else Color.Transparent, RoundedCornerShape(6.dp))
+                                            .clickable { showTamilExplanation = true }
+                                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                                    ) {
+                                        Text("தமிழ்", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (showTamilExplanation) Color(0xFF2563EB) else Color(0xFF64748B))
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val explanationText = if (showTamilExplanation && activeDoc.tamilExplanation.isNotBlank()) {
+                                activeDoc.tamilExplanation
+                            } else {
+                                if (activeDoc.simpleExplanation.isNotBlank()) activeDoc.simpleExplanation else activeDoc.keySummary
+                            }
+
+                            Text(
+                                text = explanationText,
+                                fontSize = 13.sp,
+                                color = Color(0xFF334155),
+                                lineHeight = 19.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Extracted Action Checklist
+                    if (activeDoc.actions.isNotEmpty()) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color.White,
+                            shape = RoundedCornerShape(14.dp),
+                            shadowElevation = 1.dp,
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(
+                                    text = "Action Items Checklist (${activeDoc.actions.size})",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                activeDoc.actions.forEach { action ->
+                                    val isCompleted = action.isCompleted
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                TaskManager.toggleTaskCompletion(context, action.id)
+                                            }
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .background(if (isCompleted) Color(0xFF16A34A) else Color.Transparent, RoundedCornerShape(4.dp))
+                                                .border(if (isCompleted) 0.dp else 1.5.dp, if (isCompleted) Color.Transparent else Color(0xFF94A3B8), RoundedCornerShape(4.dp)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (isCompleted) {
+                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = action.title,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = if (isCompleted) Color(0xFF94A3B8) else Color(0xFF0F172A),
+                                                style = if (isCompleted) TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough) else TextStyle()
+                                            )
+                                            Text(
+                                                text = "Due: ${action.dateTime} • ${action.priorityText} priority",
+                                                fontSize = 11.sp,
+                                                color = Color(0xFF64748B)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Interactive "Ask AI About This Notice" Card
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White,
+                        shape = RoundedCornerShape(14.dp),
+                        shadowElevation = 1.dp,
+                        border = BorderStroke(1.dp, Color(0xFFDDD6FE))
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .background(Color(0xFFEDE9FE), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.QuestionAnswer, contentDescription = null, tint = Color(0xFF7C3AED), modifier = Modifier.size(16.dp))
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Ask AI About This Notice",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A)
+                                    )
+                                    Text(
+                                        text = "Get direct answers from notice context",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF7C3AED)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // Suggestion question chips
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf("Deadline?", "Required tasks?", "Fees / Payments?").forEach { chip ->
+                                    Surface(
+                                        modifier = Modifier.clickable {
+                                            userQuestion = chip
+                                            aiAnswer = NoticeAiAssistant.answerQuestion(chip, activeDoc)
+                                        },
+                                        color = Color(0xFFF5F3FF),
+                                        shape = RoundedCornerShape(12.dp),
+                                        border = BorderStroke(1.dp, Color(0xFFDDD6FE))
+                                    ) {
+                                        Text(
+                                            text = chip,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF6D28D9),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = userQuestion,
+                                    onValueChange = { userQuestion = it },
+                                    placeholder = { Text("Ask about dates, fees, rules...", fontSize = 12.sp) },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                IconButton(
+                                    onClick = {
+                                        if (userQuestion.isNotBlank()) {
+                                            aiAnswer = NoticeAiAssistant.answerQuestion(userQuestion, activeDoc)
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(Color(0xFF7C3AED), RoundedCornerShape(10.dp))
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Ask", tint = Color.White, modifier = Modifier.size(16.dp))
+                                }
+                            }
+
+                            if (aiAnswer != null) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = Color(0xFFF5F3FF),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFDDD6FE))
+                                ) {
+                                    Row(modifier = Modifier.padding(10.dp)) {
+                                        Icon(Icons.Default.Lightbulb, contentDescription = null, tint = Color(0xFF7C3AED), modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = aiAnswer!!,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF5B21B6),
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
-            Button(
-                onClick = { onShareClicked() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(text = "Share Notice", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            if (activeDoc != null) {
+                Button(
+                    onClick = {
+                        IntentUtils.shareNotice(context, activeDoc)
+                        onShareClicked()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Share Notice Summary", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
             }
         }
     }
@@ -3122,11 +3829,9 @@ fun DocumentDetailsScreen(
             onDismissRequest = { },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Lock, contentDescription = "Lock", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Document Protection Lock", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
-                    }
+                    Icon(Icons.Default.Lock, contentDescription = "Lock", tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Document Protection Lock", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
                 }
             },
             text = {

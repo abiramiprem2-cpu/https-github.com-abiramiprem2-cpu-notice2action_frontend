@@ -20,6 +20,9 @@ import com.simats.notice2action.data.NoticeAnalysisResult
 import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.SessionManager
+import com.simats.notice2action.data.DocumentManager
+import com.simats.notice2action.data.TaskManager
+import com.simats.notice2action.data.IntentUtils
 import androidx.compose.ui.platform.LocalContext
 import com.simats.notice2action.data.UserSession
 
@@ -322,8 +325,10 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val activeDoc: NoticeAnalysisResult? = DocumentAnalysisSession.activeResult
-                    val docsProcessedCount = if (activeDoc != null) 1 else 0
+                    val allDocs = DocumentManager.documents
+                    val pendingTasks = TaskManager.getPendingTasks()
+                    val docsProcessedCount = allDocs.size
+                    val upcomingActionsCount = pendingTasks.size
                     Column(modifier = Modifier.weight(1f).clickable { onMyDocumentsClicked() }) {
                         Text(
                             text = docsProcessedCount.toString(),
@@ -339,7 +344,7 @@ fun DashboardScreen(
                     }
                     Column(modifier = Modifier.weight(1f).clickable { onTasksClicked() }) {
                         Text(
-                            text = DocumentAnalysisSession.confirmedTasks.size.toString(),
+                            text = upcomingActionsCount.toString(),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0F172A)
@@ -376,8 +381,8 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                val activeDoc = DocumentAnalysisSession.activeResult
-                if (activeDoc == null) {
+                val allDocs = DocumentManager.documents
+                if (allDocs.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -418,88 +423,99 @@ fun DashboardScreen(
                         }
                     }
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(2.dp, RoundedCornerShape(16.dp))
-                            .background(Color.White, RoundedCornerShape(16.dp))
-                            .clickable { onMyDocumentsClicked() }
-                            .padding(14.dp)
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Description,
-                                            contentDescription = null,
-                                            tint = Color(0xFF2563EB),
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = activeDoc.documentTitle,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF0F172A)
-                                        )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = "PDF • Scanned notice",
-                                            fontSize = 11.sp,
-                                            color = Color(0xFF64748B)
-                                        )
-                                    }
+                    allDocs.take(2).forEach { doc ->
+                        val (completed, total) = TaskManager.getProgressForDocument(doc.documentTitle)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(2.dp, RoundedCornerShape(16.dp))
+                                .background(Color.White, RoundedCornerShape(16.dp))
+                                .clickable {
+                                    DocumentAnalysisSession.activeResult = doc
+                                    onMyDocumentsClicked()
                                 }
-
-                                Icon(
-                                    imageVector = Icons.Default.MoreHoriz,
-                                    contentDescription = null,
-                                    tint = Color(0xFF94A3B8),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(14.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = AppStrings.get("dash_verify_dates"),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFD97706)
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Description,
+                                                contentDescription = null,
+                                                tint = Color(0xFF2563EB),
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                text = doc.documentTitle,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF0F172A),
+                                                maxLines = 1
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "🏛 ${doc.issuingAuthority} • ${doc.category}",
+                                                fontSize = 11.sp,
+                                                color = Color(0xFF64748B),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
-                                Text(
-                                    text = "${activeDoc.actions.size} ${AppStrings.get("dash_actions_identified")}",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
-                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(Color(0xFFFEF3C7), RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Due: ${doc.primaryDeadline}",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFD97706)
+                                        )
+                                    }
+                                    Text(
+                                        text = "$completed/$total actions done",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (completed >= total) Color(0xFF16A34A) else Color(0xFF2563EB)
+                                    )
+                                }
                             }
                         }
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = AppStrings.get("dash_upcoming_deadlines"),
@@ -510,7 +526,7 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                val upcomingTasks = DocumentAnalysisSession.confirmedTasks
+                val upcomingTasks = TaskManager.getPendingTasks()
                 if (upcomingTasks.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -535,14 +551,14 @@ fun DashboardScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "No Upcoming Deadlines",
+                                    text = "All Tasks Completed! 🎉",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0F172A)
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Upload a document to track upcoming deadlines.",
+                                    text = "No pending actions. You are completely up to date.",
                                     fontSize = 11.sp,
                                     color = Color(0xFF64748B)
                                 )
@@ -550,89 +566,96 @@ fun DashboardScreen(
                         }
                     }
                 } else {
-                    val firstTask: ActionTask = upcomingTasks.first()
-                    val (priorityBg, priorityTextColor) = when {
-                        firstTask.priorityText.equals("High", ignoreCase = true) -> Pair(Color(0xFFFEE2E2), Color(0xFFDC2626))
-                        firstTask.priorityText.equals("Low", ignoreCase = true) -> Pair(Color(0xFFDCFCE7), Color(0xFF16A34A))
-                        else -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
-                    }
+                    upcomingTasks.take(2).forEach { task ->
+                        val (priorityBg, priorityTextColor) = when {
+                            task.priorityText.equals("High", ignoreCase = true) -> Pair(Color(0xFFFEE2E2), Color(0xFFDC2626))
+                            task.priorityText.equals("Low", ignoreCase = true) -> Pair(Color(0xFFDCFCE7), Color(0xFF16A34A))
+                            else -> Pair(Color(0xFFFEF3C7), Color(0xFFD97706))
+                        }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(2.dp, RoundedCornerShape(16.dp))
-                            .background(Color.White, RoundedCornerShape(16.dp))
-                            .clickable { onTasksClicked() }
-                            .padding(14.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .background(Color(0xFFDBEAFE), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(2.dp, RoundedCornerShape(16.dp))
+                                .background(Color.White, RoundedCornerShape(16.dp))
+                                .clickable {
+                                    DocumentAnalysisSession.selectedTask = task
+                                    onTasksClicked()
                                 }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = firstTask.title,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF0F172A)
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = activeDoc?.documentTitle ?: "Notice Document",
-                                        fontSize = 11.sp,
-                                        color = Color(0xFF64748B)
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.Event,
-                                            contentDescription = null,
-                                            tint = Color(0xFF64748B),
-                                            modifier = Modifier.size(12.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
+                                .padding(14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(Color(0xFFDBEAFE), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
                                         Text(
-                                            text = firstTask.dateTime,
-                                            fontSize = 10.sp,
-                                            color = Color(0xFF64748B)
+                                            text = task.title,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0F172A),
+                                            maxLines = 1
                                         )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = task.documentTitle,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF64748B),
+                                            maxLines = 1
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Event,
+                                                contentDescription = null,
+                                                tint = Color(0xFF64748B),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = task.dateTime,
+                                                fontSize = 10.sp,
+                                                color = Color(0xFF64748B)
+                                            )
+                                        }
                                     }
                                 }
-                            }
 
-                            Column(horizontalAlignment = Alignment.End) {
-                                Box(
-                                    modifier = Modifier
-                                        .background(priorityBg, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = firstTask.priorityText,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = priorityTextColor
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(priorityBg, RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = task.priorityText,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = priorityTextColor
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Icon(
-                                    imageVector = Icons.Default.ChevronRight,
-                                    contentDescription = null,
-                                    tint = Color(0xFF94A3B8),
-                                    modifier = Modifier.size(16.dp)
-                                )
                             }
                         }
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
             }

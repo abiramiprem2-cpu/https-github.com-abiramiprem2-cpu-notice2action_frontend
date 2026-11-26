@@ -2,6 +2,8 @@ package com.simats.notice2action
 
 import com.simats.notice2action.data.DocumentAnalysisSession
 import com.simats.notice2action.data.AppStrings
+import com.simats.notice2action.data.TaskManager
+import com.simats.notice2action.data.ReminderManager
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
@@ -249,23 +251,51 @@ fun CalendarScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val calTasks = TaskManager.tasks
+            val calReminders = ReminderManager.reminders
+
             // Events List
             Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                EventCard(
-                    time = "5:00\nPM",
-                    title = "Submit project proposal",
-                    subtitle = "Innovation Week 2026 • High Priority",
-                    barColor = Color(0xFFDC2626)
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                EventCard(
-                    time = "9:00\nAM",
-                    title = "Reminder: Submit proposal tomorrow",
-                    subtitle = "Personal Reminder • Scheduled by you",
-                    barColor = Color(0xFF2563EB)
-                )
+                if (calTasks.isEmpty() && calReminders.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No events scheduled for this day.",
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                } else {
+                    calTasks.forEach { task ->
+                        val timeStr = if (task.dateTime.contains("•")) task.dateTime.substringAfter("•").trim() else "10:00 AM"
+                        val barCol = when (task.priorityText.lowercase()) {
+                            "high" -> Color(0xFFDC2626)
+                            "medium" -> Color(0xFFD97706)
+                            else -> Color(0xFF16A34A)
+                        }
+                        EventCard(
+                            time = timeStr.replace(" ", "\n"),
+                            title = task.title,
+                            subtitle = "${task.documentTitle} • ${task.priorityText} Priority",
+                            barColor = barCol
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    calReminders.take(2).forEach { rem ->
+                        EventCard(
+                            time = "9:00\nAM",
+                            title = rem.title,
+                            subtitle = "${rem.sourceDocument} • Scheduled Reminder",
+                            barColor = Color(0xFF2563EB)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
             }
         }
     }

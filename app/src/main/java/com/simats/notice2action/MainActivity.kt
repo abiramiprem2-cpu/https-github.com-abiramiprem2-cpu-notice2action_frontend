@@ -21,9 +21,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.simats.notice2action.data.AuthRepository
 import com.simats.notice2action.data.DocumentAnalysisSession
+import com.simats.notice2action.data.DocumentManager
 import com.simats.notice2action.data.LanguageManager
 import com.simats.notice2action.data.NotificationHelper
+import com.simats.notice2action.data.ReminderManager
 import com.simats.notice2action.data.SessionManager
+import com.simats.notice2action.data.TaskManager
 import com.simats.notice2action.data.UserSession
 import com.simats.notice2action.ui.theme.Notice2actionTheme
 import kotlinx.coroutines.delay
@@ -136,6 +139,9 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(Unit) {
                     LanguageManager.init(context)
+                    DocumentManager.init(context)
+                    TaskManager.init(context)
+                    ReminderManager.init(context)
                     DocumentAnalysisSession.documentPin = SessionManager.getDocumentPin(context)
                     DocumentAnalysisSession.isDocumentLocked = SessionManager.isDocumentLocked(context)
                     if (currentScreen == AppScreen.SPLASH) {
