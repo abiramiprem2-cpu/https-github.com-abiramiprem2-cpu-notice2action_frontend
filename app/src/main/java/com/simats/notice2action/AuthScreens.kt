@@ -41,15 +41,12 @@ fun SplashScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.linearGradient(
+                Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0072FF),
-                        Color(0xFF00C6FF),
-                        Color(0xFF6B11CB),
-                        Color(0xFF8B2FC9)
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                        Color(0xFF0F172A),
+                        Color(0xFF1E1B4B),
+                        Color(0xFF1E3A8A)
+                    )
                 )
             ),
         contentAlignment = Alignment.Center
@@ -59,98 +56,44 @@ fun SplashScreen() {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(24.dp)
         ) {
-            Box(
-                modifier = Modifier.size(160.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val width = size.width
-                    val height = size.height
-
-                    val docPath = Path().apply {
-                        moveTo(width * 0.28f, height * 0.15f)
-                        lineTo(width * 0.65f, height * 0.15f)
-                        lineTo(width * 0.82f, height * 0.32f)
-                        lineTo(width * 0.82f, height * 0.85f)
-                        arcTo(
-                            rect = Rect(width * 0.82f - width * 0.1f, height * 0.85f - height * 0.1f, width * 0.82f, height * 0.85f),
-                            startAngleDegrees = 0f,
-                            sweepAngleDegrees = 90f,
-                            forceMoveTo = false
-                        )
-                        lineTo(width * 0.28f, height * 0.75f)
-                        arcTo(
-                            rect = Rect(width * 0.28f, height * 0.75f - height * 0.1f, width * 0.28f + width * 0.1f, height * 0.75f),
-                            startAngleDegrees = 90f,
-                            sweepAngleDegrees = 90f,
-                            forceMoveTo = false
-                        )
-                        close()
-                    }
-
-                    drawPath(
-                        path = docPath,
-                        color = Color.White.copy(alpha = 0.95f),
-                        style = Fill
-                    )
-
-                    val cornerPath = Path().apply {
-                        moveTo(width * 0.65f, height * 0.15f)
-                        lineTo(width * 0.65f, height * 0.32f)
-                        lineTo(width * 0.82f, height * 0.32f)
-                        close()
-                    }
-
-                    drawPath(
-                        path = cornerPath,
-                        color = Color.White.copy(alpha = 0.6f),
-                        style = Fill
-                    )
-
-                    val checkPath = Path().apply {
-                        moveTo(width * 0.40f, height * 0.50f)
-                        lineTo(width * 0.48f, height * 0.58f)
-                        lineTo(width * 0.68f, height * 0.38f)
-                    }
-
-                    drawPath(
-                        path = checkPath,
-                        color = Color(0xFF0072FF),
-                        style = Stroke(width = 12f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                    )
-
-                    val arrowPath = Path().apply {
-                        moveTo(width * 0.38f, height * 0.68f)
-                        lineTo(width * 0.62f, height * 0.68f)
-                        lineTo(width * 0.54f, height * 0.62f)
-                        moveTo(width * 0.62f, height * 0.68f)
-                        lineTo(width * 0.54f, height * 0.74f)
-                    }
-
-                    drawPath(
-                        path = arrowPath,
-                        color = Color(0xFF00C6FF),
-                        style = Stroke(width = 8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Notice2Action",
-                color = Color.White,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
+            Notice2ActionLogo(
+                size = 140.dp,
+                isRound = false,
+                showGlow = true
             )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Notice",
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "2",
+                    color = Color(0xFF38BDF8),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "Action",
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Turn Documents Into Actions",
                 color = Color.White.copy(alpha = 0.85f),
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 0.5.sp
             )
@@ -181,7 +124,9 @@ fun OnboardingStep1Screen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Notice2ActionLogo(size = 32.dp, isRound = false, showGlow = false)
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Notice2Action",
                             fontSize = 18.sp,
@@ -747,7 +692,7 @@ fun LoginScreen(
                         )
                     }
 
-                    Icon(Icons.Default.Security, contentDescription = "Security", tint = Color(0xFF2563EB), modifier = Modifier.size(22.dp))
+                    Notice2ActionLogo(size = 36.dp, isRound = false, showGlow = false)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -973,12 +918,7 @@ fun CreateAccountScreen(
                         )
                     }
 
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = Color(0xFF4F46E5),
-                        modifier = Modifier.size(22.dp)
-                    )
+                    Notice2ActionLogo(size = 36.dp, isRound = false, showGlow = false)
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))

@@ -1,30 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
+
+    <!-- Subtle Drop Shadow beneath the document -->
+    <path
+        android:pathData="M35,28 L63,28 L77,42 L77,84 A4,4 0 0,1 73,88 L35,88 A4,4 0 0,1 31,84 L31,32 A4,4 0 0,1 35,28 Z"
+        android:fillColor="#33000000" />
+
+    <!-- Main Document Body in crisp pearl white -->
+    <path
+        android:pathData="M34,26 L62,26 L76,40 L76,82 A4,4 0 0,1 72,86 L34,86 A4,4 0 0,1 30,82 L30,30 A4,4 0 0,1 34,26 Z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
+                android:startX="30"
+                android:startY="26"
+                android:endX="76"
+                android:endY="86"
                 android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="1.0" android:color="#F1F5F9" />
             </gradient>
         </aapt:attr>
     </path>
+
+    <!-- Folded Top-Right Corner with Royal Blue Sheen -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:pathData="M62,26 L62,38 A2,2 0 0,0 64,40 L76,40 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="62"
+                android:startY="26"
+                android:endX="76"
+                android:endY="40"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#93C5FD" />
+                <item android:offset="0.6" android:color="#3B82F6" />
+                <item android:offset="1.0" android:color="#1D4ED8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Notice Lines representing document text -->
+    <path
+        android:pathData="M38,40 L54,40"
+        android:strokeWidth="3.2"
+        android:strokeColor="#CBD5E1"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M38,48 L50,48"
+        android:strokeWidth="3.2"
+        android:strokeColor="#E2E8F0"
+        android:strokeLineCap="round" />
+
+    <!-- Dynamic Action Checkmark / Forward Arrow -->
+    <!-- Glowing checkmark shadow -->
+    <path
+        android:pathData="M39,63 L49,73 L75,47"
+        android:strokeWidth="8.5"
+        android:strokeColor="#300284C7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Main Dynamic Cyan-to-Emerald Action Checkmark -->
+    <path
+        android:pathData="M39,61 L49,71 L75,45"
+        android:strokeWidth="6.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="39"
+                android:startY="71"
+                android:endX="75"
+                android:endY="45"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00000000" />
+                <item android:offset="1.0" android:color="#00000000" />
+            </gradient>
+        </aapt:attr>
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="39"
+                android:startY="71"
+                android:endX="75"
+                android:endY="45"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0284C7" />
+                <item android:offset="0.4" android:color="#06B6D4" />
+                <item android:offset="0.8" android:color="#10B981" />
+                <item android:offset="1.0" android:color="#34D399" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Action Arrow Head on the top-right tip of checkmark -->
+    <path
+        android:pathData="M69,45 L75,45 L75,51"
+        android:strokeWidth="4.2"
+        android:strokeColor="#10B981"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Deadline Spark / Notification Pulse Badge in Vivid Amber -->
+    <path
+        android:pathData="M73,28 A4.5,4.5 0 1,1 64,28 A4.5,4.5 0 1,1 73,28"
+        android:fillColor="#F59E0B" />
+    <path
+        android:pathData="M71,28 A2.5,2.5 0 1,1 66,28 A2.5,2.5 0 1,1 71,28"
+        android:fillColor="#FEF08A" />
+
 </vector>

@@ -118,13 +118,45 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "${AppStrings.get("dash_good_morning")}, $displayName!",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Notice2ActionLogo(
+                            size = 38.dp,
+                            isRound = false,
+                            showGlow = false
                         )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Notice",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Text(
+                                    text = "2",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF2563EB)
+                                )
+                                Text(
+                                    text = "Action",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF0F172A)
+                                )
+                            }
+                            Text(
+                                text = "${AppStrings.get("dash_good_morning")}, $displayName",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF64748B),
+                                maxLines = 1
+                            )
+                        }
                     }
 
                     IconButton(
@@ -737,11 +769,11 @@ fun NavigationDrawerScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Notice2Action",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2563EB)
+                            Notice2ActionBrandingHeader(
+                                logoSize = 34.dp,
+                                titleSize = 15,
+                                subtitle = "Document Workspace",
+                                isLightMode = true
                             )
                             IconButton(
                                 onClick = onClose,

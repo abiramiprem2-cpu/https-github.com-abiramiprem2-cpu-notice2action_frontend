@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Rounded Squircle Background Container -->
+    <path
+        android:pathData="M24,8 L96,8 A16,16 0 0,1 112,24 L112,96 A16,16 0 0,1 96,112 L24,112 A16,16 0 0,1 8,96 L8,24 A16,16 0 0,1 24,8 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="8"
+                android:startY="8"
+                android:endX="112"
+                android:endY="112"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#1E1B4B" />
+                <item android:offset="0.5" android:color="#1E3A8A" />
+                <item android:offset="1.0" android:color="#2563EB" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner Glow Border -->
+    <path
+        android:pathData="M24,9 L96,9 A15,15 0 0,1 111,24 L111,96 A15,15 0 0,1 96,111 L24,111 A15,15 0 0,1 9,96 L9,24 A15,15 0 0,1 24,9 Z"
+        android:fillColor="#00000000"
+        android:strokeWidth="1.5"
+        android:strokeColor="#30FFFFFF" />
+
+    <!-- Main Document Page -->
+    <path
+        android:pathData="M38,28 L72,28 L88,44 L88,90 A4,4 0 0,1 84,94 L38,94 A4,4 0 0,1 34,90 L34,32 A4,4 0 0,1 38,28 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="34"
+                android:startY="28"
+                android:endX="88"
+                android:endY="94"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="1.0" android:color="#F1F5F9" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Folded Corner -->
+    <path
+        android:pathData="M72,28 L72,42 A2,2 0 0,0 74,44 L88,44 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="72"
+                android:startY="28"
+                android:endX="88"
+                android:endY="44"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#93C5FD" />
+                <item android:offset="1.0" android:color="#1D4ED8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Text Hint Lines -->
+    <path
+        android:pathData="M44,42 L62,42"
+        android:strokeWidth="3.2"
+        android:strokeColor="#CBD5E1"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M44,51 L58,51"
+        android:strokeWidth="3.2"
+        android:strokeColor="#E2E8F0"
+        android:strokeLineCap="round" />
+
+    <!-- Dynamic Checkmark & Action Arrow -->
+    <path
+        android:pathData="M44,68 L55,79 L85,49"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="44"
+                android:startY="79"
+                android:endX="85"
+                android:endY="49"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0284C7" />
+                <item android:offset="0.5" android:color="#06B6D4" />
+                <item android:offset="1.0" android:color="#10B981" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path
+        android:pathData="M78,49 L85,49 L85,56"
+        android:strokeWidth="4.5"
+        android:strokeColor="#10B981"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Deadline Amber Dot -->
+    <path
+        android:pathData="M84,30 A4,4 0 1,1 76,30 A4,4 0 1,1 84,30"
+        android:fillColor="#F59E0B" />
+</vector>

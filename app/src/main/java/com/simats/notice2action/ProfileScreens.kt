@@ -950,6 +950,30 @@ fun SettingsAndPrivacyScreen(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // App Branding Footer with New Logo
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Notice2ActionLogo(size = 46.dp, isRound = true, showGlow = false)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Notice2Action • v1.0.0",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppThemeManager.subTextColor
+                    )
+                    Text(
+                        text = "Turn Documents Into Actions",
+                        fontSize = 11.sp,
+                        color = AppThemeManager.subTextColor.copy(alpha = 0.75f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -1728,6 +1752,30 @@ fun LanguageSettingsScreen(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // App Branding Footer with New Logo
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Notice2ActionLogo(size = 46.dp, isRound = true, showGlow = false)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Notice2Action • v1.0.0",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppThemeManager.subTextColor
+                    )
+                    Text(
+                        text = "Turn Documents Into Actions",
+                        fontSize = 11.sp,
+                        color = AppThemeManager.subTextColor.copy(alpha = 0.75f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -1865,6 +1913,30 @@ fun HelpSupportScreen(
                         FaqItem("Can I edit a task or its deadline?", null, false)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // App Branding Footer with New Logo
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Notice2ActionLogo(size = 46.dp, isRound = true, showGlow = false)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Notice2Action • v1.0.0",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppThemeManager.subTextColor
+                    )
+                    Text(
+                        text = "Turn Documents Into Actions",
+                        fontSize = 11.sp,
+                        color = AppThemeManager.subTextColor.copy(alpha = 0.75f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
