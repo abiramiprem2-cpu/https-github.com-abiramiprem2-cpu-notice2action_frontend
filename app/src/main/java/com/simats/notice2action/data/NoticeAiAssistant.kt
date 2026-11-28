@@ -67,4 +67,23 @@ object NoticeAiAssistant {
             }
         }
     }
+
+    suspend fun askNoticeAi(question: String, document: NoticeAnalysisResult, userId: Int = 1): String {
+        return try {
+            val body = org.json.JSONObject().apply {
+                put("question", question)
+                put("document_title", document.documentTitle)
+                put("document_text", document.rawOcrText)
+                put("user_id", userId)
+            }
+            val (_, json) = ApiClient.postJson("ai/ask_notice.php", body)
+            if (json.optBoolean("success", false) && json.has("answer")) {
+                json.getString("answer")
+            } else {
+                answerQuestion(question, document)
+            }
+        } catch (_: Exception) {
+            answerQuestion(question, document)
+        }
+    }
 }

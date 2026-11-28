@@ -77,6 +77,10 @@ fun DashboardScreen(
                     SessionManager.saveSession(context, freshUser, pass)
                 }
             } catch (_: Exception) {}
+            // Sync all offline notices, tasks, reminders in background
+            try {
+                com.simats.notice2action.data.SyncManager.syncAll(context, id)
+            } catch (_: Exception) {}
         }
     }
 
@@ -203,6 +207,14 @@ fun DashboardScreen(
                         fontSize = 18.sp
                     )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Daily AI Briefing, Action Priorities & Streak System
+                DailyAiBriefingCard(
+                    onViewTasksClicked = onTasksClicked,
+                    onScanNoticeClicked = onScanDocumentClicked
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 

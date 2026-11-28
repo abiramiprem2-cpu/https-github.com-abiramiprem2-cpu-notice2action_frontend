@@ -112,6 +112,8 @@ import com.simats.notice2action.data.DocumentManager
 import com.simats.notice2action.data.TaskManager
 import com.simats.notice2action.data.IntentUtils
 import com.simats.notice2action.data.NoticeAiAssistant
+import com.simats.notice2action.data.UserSession
+import com.simats.notice2action.data.SessionManager
 import android.content.ClipData
 import android.content.ClipboardManager
 
@@ -1880,11 +1882,15 @@ fun NoticeDetailsScreen(
     var userQuestion by remember { mutableStateOf("") }
     var aiAnswer by remember { mutableStateOf<String?>(null) }
     var isAnswering by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     fun answerNoticeQuestion(q: String) {
         isAnswering = true
-        aiAnswer = NoticeAiAssistant.answerQuestion(q, analysis)
-        isAnswering = false
+        coroutineScope.launch {
+            val uid = UserSession.currentUser?.id ?: SessionManager.getSavedUser(context)?.id ?: 1
+            aiAnswer = NoticeAiAssistant.askNoticeAi(q, analysis, uid)
+            isAnswering = false
+        }
     }
 
     Surface(
@@ -3392,6 +3398,8 @@ fun DocumentDetailsScreen(
     var showTamilExplanation by remember { mutableStateOf(false) }
     var userQuestion by remember { mutableStateOf("") }
     var aiAnswer by remember { mutableStateOf<String?>(null) }
+    var isAnswering by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -3729,7 +3737,12 @@ fun DocumentDetailsScreen(
                                     Surface(
                                         modifier = Modifier.clickable {
                                             userQuestion = chip
-                                            aiAnswer = NoticeAiAssistant.answerQuestion(chip, activeDoc)
+                                            coroutineScope.launch {
+                                                isAnswering = true
+                                                val uid = UserSession.currentUser?.id ?: SessionManager.getSavedUser(context)?.id ?: 1
+                                                aiAnswer = NoticeAiAssistant.askNoticeAi(chip, activeDoc, uid)
+                                                isAnswering = false
+                                            }
                                         },
                                         color = Color(0xFFF5F3FF),
                                         shape = RoundedCornerShape(12.dp),
@@ -3764,7 +3777,13 @@ fun DocumentDetailsScreen(
                                 IconButton(
                                     onClick = {
                                         if (userQuestion.isNotBlank()) {
-                                            aiAnswer = NoticeAiAssistant.answerQuestion(userQuestion, activeDoc)
+                                            val q = userQuestion
+                                            coroutineScope.launch {
+                                                isAnswering = true
+                                                val uid = UserSession.currentUser?.id ?: SessionManager.getSavedUser(context)?.id ?: 1
+                                                aiAnswer = NoticeAiAssistant.askNoticeAi(q, activeDoc, uid)
+                                                isAnswering = false
+                                            }
                                         }
                                     },
                                     modifier = Modifier

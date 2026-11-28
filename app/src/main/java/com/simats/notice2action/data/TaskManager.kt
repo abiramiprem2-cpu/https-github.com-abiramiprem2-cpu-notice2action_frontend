@@ -94,6 +94,9 @@ object TaskManager {
 
             if (newCompleted) {
                 ReminderManager.completeTaskReminders(updated.title, context)
+                StreakAndAchievementManager.recordTaskCompleted(context)
+            } else {
+                StreakAndAchievementManager.recordTaskUncompleted(context)
             }
 
             // Sync with backend
@@ -196,7 +199,7 @@ object TaskManager {
         )
     }
 
-    private fun syncWithBackend(context: Context) {
+    fun syncWithBackend(context: Context) {
         val userId = UserSession.currentUser?.id ?: 1
         CoroutineScope(Dispatchers.IO).launch {
             try {

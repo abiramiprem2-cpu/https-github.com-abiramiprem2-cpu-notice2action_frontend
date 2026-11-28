@@ -181,7 +181,7 @@ object DocumentManager {
         )
     }
 
-    private fun syncWithBackend(context: Context) {
+    fun syncWithBackend(context: Context) {
         val userId = UserSession.currentUser?.id ?: 1
         CoroutineScope(Dispatchers.IO).launch {
             try {

@@ -54,7 +54,9 @@ data class NoticeAnalysisResult(
     val byWhenShouldIDoIt: String = primaryDeadline,
     val tamilExplanation: String = "",
     val tamilActions: List<String> = emptyList(),
-    val sourceSnippets: List<String> = emptyList()
+    val sourceSnippets: List<String> = emptyList(),
+    val requiredDocuments: List<String> = emptyList(),
+    val expiryDate: String = ""
 )
 
 object DocumentAnalysisSession {
@@ -115,6 +117,10 @@ object DocumentAnalysisSession {
         result.actions.forEach { action ->
             TaskManager.addTask(context, action, result.documentTitle)
         }
+
+        try {
+            StreakAndAchievementManager.recordNoticeScanned(context)
+        } catch (_: Exception) {}
 
         return result
     }
@@ -390,12 +396,14 @@ object DocumentAnalysisSession {
         val actions = mutableListOf<ActionTask>()
         val tamilActions = mutableListOf<String>()
         val sourceSnippets = mutableListOf<String>()
+        val detectedChecklist = extractRequiredDocumentChecklist(rawLines)
 
         if (actionLines.isNotEmpty()) {
             // EXTRACT TASKS DIRECTLY FROM REAL DOCUMENT SENTENCES
             actionLines.take(4).forEachIndexed { idx, line ->
                 val taskTitle = line.take(45).let { if (it.length == 45) "$it..." else it }
                 val taskDate = extractedDates.getOrNull(idx) ?: detectedDate
+                val smartPriority = detectSmartPriority(line, ocrText, idx)
 
                 actions.add(
                     ActionTask(
@@ -405,10 +413,12 @@ object DocumentAnalysisSession {
                         dateNum = taskDate.filter { it.isDigit() }.take(2).ifBlank { "${15 + idx * 3}" },
                         dateMonth = "NOV",
                         daysLeft = "${3 + idx * 2} days left",
-                        priorityText = if (idx == 0) "High" else "Medium",
+                        priorityText = smartPriority,
                         statusText = "Extracted from notice",
                         quote = "\"$line\"",
-                        category = docCategory
+                        category = docCategory,
+                        checklistItems = detectedChecklist,
+                        documentTitle = docTitle
                     )
                 )
                 tamilActions.add("ஆவணத்தில் குறிப்பிடப்பட்டுள்ள பணி: $taskTitle")
@@ -572,7 +582,51 @@ Authorized by: $authority
             byWhenShouldIDoIt = byWhenShouldIDoItText,
             tamilExplanation = tamilExplanation,
             tamilActions = tamilActions,
-            sourceSnippets = sourceSnippets
+            sourceSnippets = sourceSnippets,
+            requiredDocuments = detectedChecklist,
+            expiryDate = detectedDate
         )
+    }
+
+    private fun detectSmartPriority(line: String, ocrFullText: String, index: Int = 0): String {
+        val low = (line + " " + ocrFullText).lowercase()
+        return when {
+            low.contains("court") || low.contains("arrest") || low.contains("disconnect") ||
+            low.contains("penalty") || low.contains("fine") || low.contains("summons") ||
+            low.contains("urgent") || low.contains("immediate") || low.contains("final notice") || index == 0 -> "High"
+
+            low.contains("mandatory") || low.contains("compulsory") || low.contains("strict") ||
+            low.contains("deadline") || low.contains("submit") || low.contains("pay") || index == 1 -> "Medium"
+
+            else -> "Normal"
+        }
+    }
+
+    private fun extractRequiredDocumentChecklist(rawLines: List<String>): List<String> {
+        val checklist = mutableListOf<String>()
+        val docKeywords = listOf(
+            "ID Proof / Identity Proof" to listOf("id proof", "identity", "voter id", "aadhaar", "pan card", "passport"),
+            "Original Notice / Bill Copy" to listOf("original", "copy of notice", "bill", "invoice", "receipt", "challan"),
+            "Payment / Fee Receipt" to listOf("fee receipt", "payment proof", "counterfoil", "bank statement"),
+            "Passport Size Photograph" to listOf("photo", "photograph", "passport size"),
+            "Educational Certificates" to listOf("marksheet", "degree", "diploma", "certificate"),
+            "Completed Application Form" to listOf("application form", "filled form", "annexure", "declaration")
+        )
+
+        for (line in rawLines) {
+            val low = line.lowercase()
+            for ((label, triggers) in docKeywords) {
+                if (triggers.any { low.contains(it) } && !checklist.contains(label)) {
+                    checklist.add(label)
+                }
+            }
+        }
+
+        if (checklist.isEmpty()) {
+            checklist.add("Identification Proof")
+            checklist.add("Original Document / Printed Notice")
+            checklist.add("Relevant Supporting Records")
+        }
+        return checklist.take(4)
     }
 }
